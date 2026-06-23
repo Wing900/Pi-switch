@@ -1,0 +1,255 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 22, 25, 0.42);
+  backdrop-filter: blur(5px);
+  animation: backdropIn 160ms ease-out;
+}
+
+.modal-dialog {
+  width: min(410px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  backdrop-filter: blur(24px) saturate(0.86);
+  box-shadow: var(--shadow-float);
+  animation: dialogIn 240ms var(--ease-out);
+}
+
+.modal-dialog--wide {
+  width: min(570px, 100%);
+}
+
+.modal-dialog--success {
+  border-top: 3px solid var(--success);
+}
+
+.modal-dialog--error {
+  border-top: 3px solid var(--danger);
+}
+
+.modal-header {
+  padding: 27px 28px 18px;
+}
+
+.modal-header h3 {
+  margin: 8px 0 6px;
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 500;
+}
+
+.modal-header p {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.modal-body {
+  padding: 3px 28px 23px;
+}
+
+.modal-footer {
+  min-height: 67px;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  background: var(--surface-muted);
+}
+
+.modal-footer .text-button {
+  font-size: 12px;
+}
+
+.result-list {
+  border-top: 1px solid var(--line-subtle);
+}
+
+.result-row {
+  padding: 11px 0;
+  display: flex;
+  gap: 11px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.result-row > span {
+  width: 5px;
+  height: 5px;
+  margin-top: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.result-row p {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.loading-line {
+  height: 2px;
+  overflow: hidden;
+  background: var(--line-subtle);
+}
+
+.loading-line span {
+  width: 38%;
+  height: 100%;
+  display: block;
+  background: var(--accent);
+  animation: loadingSweep 1.1s ease-in-out infinite;
+}
+
+.model-check-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.model-check-row {
+  position: relative;
+  padding: 13px 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line-subtle);
+  cursor: pointer;
+  animation: rowIn 260ms var(--ease-out) both;
+}
+
+.model-check-row:nth-child(2) { animation-delay: 25ms; }
+.model-check-row:nth-child(3) { animation-delay: 50ms; }
+.model-check-row:nth-child(4) { animation-delay: 75ms; }
+.model-check-row:nth-child(n + 5) { animation-delay: 100ms; }
+
+.model-check-row input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.model-check-row__box {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+}
+
+.model-check-row input:checked + .model-check-row__box {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--surface-raised);
+}
+
+.model-check-row strong,
+.model-check-row small {
+  display: block;
+}
+
+.model-check-row strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.model-check-row small {
+  margin-top: 3px;
+  color: var(--ink-muted);
+  font-size: 9px;
+}
+
+.settings-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.preset-list {
+  border-top: 1px solid var(--line-subtle);
+}
+
+.preset-row {
+  position: relative;
+  width: 100%;
+  padding: 15px 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line-subtle);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  animation: rowIn 260ms var(--ease-out) both;
+}
+
+.preset-row:hover {
+  color: var(--accent);
+}
+
+.preset-row::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 240ms var(--ease-out);
+}
+
+.preset-row:hover::after,
+.preset-row:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.preset-row strong,
+.preset-row small {
+  display: block;
+}
+
+.preset-row strong {
+  font-size: 13px;
+}
+
+.preset-row small {
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 9px;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+}
+
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes loadingSweep {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(370%); }
+}

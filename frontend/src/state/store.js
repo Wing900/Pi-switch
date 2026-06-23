@@ -6,10 +6,12 @@ export function createStore(initialState) {
     getState() {
       return state;
     },
-    setState(updater) {
+    setState(updater, options = {}) {
       const nextState = typeof updater === "function" ? updater(state) : updater;
       state = nextState;
-      listeners.forEach((listener) => listener(state));
+      if (options.notify !== false) {
+        listeners.forEach((listener) => listener(state));
+      }
     },
     subscribe(listener) {
       listeners.add(listener);

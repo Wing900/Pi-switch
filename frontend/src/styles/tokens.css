@@ -1,0 +1,24 @@
+:root {
+  --canvas: #c9c8c3;
+  --surface: rgba(238, 237, 232, 0.9);
+  --surface-raised: rgba(248, 247, 242, 0.94);
+  --surface-muted: rgba(229, 227, 221, 0.88);
+  --surface-sidebar: #faf9f5;
+  --ink: #0d0e0c;
+  --ink-secondary: #3d3f3b;
+  --ink-muted: #686a65;
+  --accent: #242522;
+  --accent-strong: #090a09;
+  --accent-soft: rgba(17, 18, 16, 0.105);
+  --success: #526b58;
+  --danger: #9b443d;
+  --line: rgba(17, 18, 16, 0.09);
+  --line-subtle: rgba(17, 18, 16, 0.05);
+  --line-strong: rgba(17, 18, 16, 0.25);
+  --shadow-float: 0 24px 70px rgba(17, 18, 16, 0.16);
+  --font-ui: "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  --font-display: "Bahnschrift", "Microsoft YaHei UI", sans-serif;
+  --radius-shell: 12px;
+  --radius-control: 6px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}

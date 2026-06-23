@@ -1,0 +1,144 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: var(--font-ui);
+  background: transparent;
+  color: var(--ink);
+}
+
+body {
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+button:focus-visible {
+  outline: 1px solid rgba(17, 18, 16, 0.24);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  outline: none;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+input:hover,
+select:hover {
+  border-bottom-color: var(--line-strong);
+}
+
+input:focus,
+select:focus {
+  border-bottom-color: var(--line);
+  background: rgba(17, 18, 16, 0.035);
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+
+.text-button {
+  position: relative;
+  padding: 3px 0;
+  color: var(--ink-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 180ms ease;
+}
+
+.text-button::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 220ms var(--ease-out);
+}
+
+.text-button:hover {
+  color: var(--ink);
+}
+
+.text-button:hover::after,
+.text-button:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.text-button--accent {
+  color: var(--accent-strong);
+}
+
+.text-button--danger {
+  color: var(--danger);
+}
+
+.window-symbol,
+.provider-row__configure {
+  position: relative;
+}
+
+.window-symbol::after,
+.provider-row__configure::after {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  left: 2px;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 220ms var(--ease-out);
+}
+
+.window-symbol:hover::after,
+.window-symbol:focus-visible::after,
+.provider-row__configure:hover::after,
+.provider-row__configure:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}

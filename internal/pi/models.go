@@ -9,10 +9,6 @@ import (
 	"piswitch/internal/system"
 )
 
-type modelsEnvelope struct {
-	Providers map[string]providerPayload `json:"providers"`
-}
-
 type providerPayload struct {
 	BaseURL string               `json:"baseUrl"`
 	API     string               `json:"api"`
@@ -31,16 +27,39 @@ func WriteModels(path string, cfg provider.Config) error {
 	if cfg.APIKeyEnv != "" {
 		key = "$" + cfg.APIKeyEnv
 	}
-	payload := modelsEnvelope{
-		Providers: map[string]providerPayload{
-			cfg.ID: {
-				BaseURL: cfg.BaseURL,
-				API:     cfg.API,
-				APIKey:  key,
-				Models:  cfg.Models,
-			},
-		},
+	payload := map[string]any{}
+	if data, err := os.ReadFile(path); err == nil {
+		_ = json.Unmarshal(data, &payload)
 	}
+	providers, ok := payload["providers"].(map[string]any)
+	if !ok {
+		providers = map[string]any{}
+		payload["providers"] = providers
+	}
+
+	nextProvider := providerPayload{
+		BaseURL: cfg.BaseURL,
+		API:     cfg.API,
+		APIKey:  key,
+		Models:  cfg.Models,
+	}
+	encodedProvider, err := json.Marshal(nextProvider)
+	if err != nil {
+		return err
+	}
+	nextFields := map[string]any{}
+	if err := json.Unmarshal(encodedProvider, &nextFields); err != nil {
+		return err
+	}
+	currentFields, _ := providers[cfg.ID].(map[string]any)
+	if currentFields == nil {
+		currentFields = map[string]any{}
+	}
+	for field, value := range nextFields {
+		currentFields[field] = value
+	}
+	providers[cfg.ID] = currentFields
+
 	data, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return err

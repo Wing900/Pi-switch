@@ -1,24 +1,69 @@
 package provider
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 )
 
 type Config struct {
-	ID              string            `json:"id"`
-	Name            string            `json:"name"`
-	Type            string            `json:"type"`
-	BaseURL         string            `json:"baseUrl"`
-	APIKeyEnv       string            `json:"apiKeyEnv"`
-	APIKeyLiteral   string            `json:"apiKeyLiteral"`
-	API             string            `json:"api"`
-	Proxy           string            `json:"proxy"`
-	Headers         map[string]string `json:"headers"`
-	Models          []ModelInfo       `json:"models"`
-	Host            string            `json:"host"`
-	SelectedModelID string            `json:"selectedModelId"`
+	ID              string                     `json:"id"`
+	Name            string                     `json:"name"`
+	Type            string                     `json:"type"`
+	BaseURL         string                     `json:"baseUrl"`
+	APIKeyEnv       string                     `json:"apiKeyEnv"`
+	APIKeyLiteral   string                     `json:"apiKeyLiteral"`
+	API             string                     `json:"api"`
+	Proxy           string                     `json:"proxy"`
+	Headers         map[string]string          `json:"headers"`
+	Models          []ModelInfo                `json:"models"`
+	Host            string                     `json:"host"`
+	SelectedModelID string                     `json:"selectedModelId"`
+	Extra           map[string]json.RawMessage `json:"-"`
+}
+
+var configFields = map[string]struct{}{
+	"id": {}, "name": {}, "type": {}, "baseUrl": {}, "apiKeyEnv": {},
+	"apiKeyLiteral": {}, "api": {}, "proxy": {}, "headers": {},
+	"models": {}, "host": {}, "selectedModelId": {},
+}
+
+func (cfg *Config) UnmarshalJSON(data []byte) error {
+	type configAlias Config
+	var decoded configAlias
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	raw := map[string]json.RawMessage{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	for field := range configFields {
+		delete(raw, field)
+	}
+	*cfg = Config(decoded)
+	cfg.Extra = raw
+	return nil
+}
+
+func (cfg Config) MarshalJSON() ([]byte, error) {
+	type configAlias Config
+	data, err := json.Marshal(configAlias(cfg))
+	if err != nil {
+		return nil, err
+	}
+	fields := map[string]json.RawMessage{}
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return nil, err
+	}
+	for field, value := range cfg.Extra {
+		if _, known := configFields[field]; !known {
+			fields[field] = value
+		}
+	}
+	return json.Marshal(fields)
 }
 
 type ModelInfo struct {

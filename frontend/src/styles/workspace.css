@@ -1,0 +1,203 @@
+.main-content {
+  flex: 1;
+  width: min(620px, calc(100% - 80px));
+  margin: 0 auto;
+  padding: 7vh 0 5vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.provider-heading {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  text-align: left;
+}
+
+.provider-heading__signal {
+  width: 36px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.provider-heading > span:nth-child(2) {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.6vw, 48px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launch-workspace {
+  width: min(430px, 100%);
+  margin-top: 26px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.model-select {
+  position: relative;
+}
+
+.model-select__trigger {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.model-select__trigger:hover,
+.model-select.is-open .model-select__trigger {
+  border-bottom-color: var(--line-strong);
+  background: var(--accent-soft);
+}
+
+.model-select__arrow {
+  color: var(--ink-muted);
+  font-size: 15px;
+  transform: rotate(0);
+  transition: transform 220ms var(--ease-out);
+}
+
+.model-select.is-open .model-select__arrow {
+  transform: rotate(180deg);
+}
+
+.model-select__menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  left: 0;
+  z-index: 10;
+  max-height: 240px;
+  padding: 6px 0;
+  overflow-y: auto;
+  border: 1px solid var(--line-subtle);
+  background: var(--surface-raised);
+  box-shadow: 0 18px 42px rgba(17, 18, 16, 0.13);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-5px) scaleY(0.98);
+  transform-origin: top center;
+  transition: opacity 160ms ease, transform 220ms var(--ease-out), visibility 160ms;
+}
+
+.model-select.is-open .model-select__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scaleY(1);
+  animation: modelMenuIn 220ms var(--ease-out);
+}
+
+.model-select__option {
+  width: 100%;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink-secondary);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease, padding-left 180ms var(--ease-out);
+}
+
+.model-select__option:hover,
+.model-select__option.is-selected {
+  padding-left: 19px;
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+.primary-action {
+  width: fit-content;
+  min-height: auto;
+  margin: 0;
+  padding: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+.launch-actions {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@keyframes modelMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(0.97);
+  }
+}
+
+.default-summary {
+  margin-top: 72px;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  color: var(--ink-muted);
+}
+
+.default-summary span {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+}
+
+.default-summary strong {
+  color: var(--ink-secondary);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.status-footer {
+  min-height: 48px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink-muted);
+  font-size: 10px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.status-path {
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

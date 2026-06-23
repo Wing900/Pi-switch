@@ -1,0 +1,97 @@
+#app {
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  background: transparent;
+}
+
+.window-shell {
+  position: relative;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  border: 1px solid rgba(23, 33, 38, 0.09);
+  border-radius: var(--radius-shell);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 42%),
+    var(--surface);
+  backdrop-filter: blur(16px) saturate(0.82);
+}
+
+.main-panel {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.34), transparent 48%),
+    var(--surface);
+}
+
+.main-panel::before {
+  position: absolute;
+  top: 48%;
+  left: 68%;
+  width: min(52vw, 570px);
+  aspect-ratio: 1;
+  content: "";
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(17, 18, 16, 0.145) 0,
+    rgba(17, 18, 16, 0.095) 25%,
+    rgba(17, 18, 16, 0.047) 50%,
+    rgba(17, 18, 16, 0.018) 65%,
+    transparent 76%
+  );
+  filter: blur(12px);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.main-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.main-topbar {
+  min-height: 54px;
+  padding: 0 18px 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  -webkit-app-region: drag;
+}
+
+.topbar-context {
+  color: var(--ink-muted);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.window-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  -webkit-app-region: no-drag;
+}
+
+.window-symbol {
+  padding: 3px;
+  color: var(--ink-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.window-symbol:hover {
+  color: var(--ink);
+}
+
+.window-symbol--danger:hover {
+  color: var(--danger);
+}

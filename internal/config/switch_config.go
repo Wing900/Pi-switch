@@ -8,6 +8,7 @@ import (
 
 	"piswitch/internal/paths"
 	"piswitch/internal/provider"
+	"piswitch/internal/system"
 )
 
 type AppSettings struct {
@@ -68,11 +69,82 @@ func (s *Service) Save(cfg SwitchConfig) error {
 	if err := os.MkdirAll(filepath.Dir(cfg.Settings.PiSwitchConfigPath), 0o755); err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err := system.BackupFile(cfg.Settings.PiSwitchConfigPath); err != nil {
+		return err
+	}
+	data, err := marshalCompatibleConfig(cfg.Settings.PiSwitchConfigPath, cfg)
 	if err != nil {
 		return err
 	}
 	return os.WriteFile(cfg.Settings.PiSwitchConfigPath, data, 0o644)
+}
+
+func marshalCompatibleConfig(path string, cfg SwitchConfig) ([]byte, error) {
+	current := map[string]any{}
+	if data, err := os.ReadFile(path); err == nil {
+		_ = json.Unmarshal(data, &current)
+	}
+
+	encoded, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	next := map[string]any{}
+	if err := json.Unmarshal(encoded, &next); err != nil {
+		return nil, err
+	}
+
+	nextProviders := next["providers"]
+	delete(next, "providers")
+	mergeConfigMap(current, next)
+	next["providers"] = nextProviders
+	mergeProviderFields(current, next)
+	return json.MarshalIndent(current, "", "  ")
+}
+
+func mergeConfigMap(target, source map[string]any) {
+	for key, value := range source {
+		sourceMap, sourceIsMap := value.(map[string]any)
+		targetMap, targetIsMap := target[key].(map[string]any)
+		if sourceIsMap && targetIsMap {
+			mergeConfigMap(targetMap, sourceMap)
+			continue
+		}
+		target[key] = value
+	}
+}
+
+func mergeProviderFields(target, source map[string]any) {
+	targetProviders, _ := target["providers"].([]any)
+	sourceProviders, _ := source["providers"].([]any)
+	existingByID := make(map[string]map[string]any, len(targetProviders))
+
+	for _, item := range targetProviders {
+		providerMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if id, ok := providerMap["id"].(string); ok {
+			existingByID[id] = providerMap
+		}
+	}
+
+	merged := make([]any, 0, len(sourceProviders))
+	for _, item := range sourceProviders {
+		providerMap, ok := item.(map[string]any)
+		if !ok {
+			merged = append(merged, item)
+			continue
+		}
+		id, _ := providerMap["id"].(string)
+		if existing := existingByID[id]; existing != nil {
+			mergeConfigMap(existing, providerMap)
+			merged = append(merged, existing)
+			continue
+		}
+		merged = append(merged, providerMap)
+	}
+	target["providers"] = merged
 }
 
 func defaultConfig(appPaths paths.AppPaths) SwitchConfig {
