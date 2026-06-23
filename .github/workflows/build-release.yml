@@ -33,7 +33,7 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir release
-          move "build\bin\PiSwitch-${{ github.ref_name }}-windows-amd64.exe" release\
+          move "build\bin\PiSwitch.exe" "release\PiSwitch-${{ github.ref_name }}-windows-amd64.exe"
         shell: cmd
 
       - uses: actions/upload-artifact@v4
@@ -72,6 +72,7 @@ jobs:
         run: |
           mkdir -p release
           cd "build/bin"
+          mv "PiSwitch.app" "PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.app"
           zip -r "../../release/PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.zip" "PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.app"
         shell: bash
 
