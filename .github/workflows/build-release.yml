@@ -143,7 +143,7 @@ jobs:
       - name: Collect release assets
         run: |
           mkdir -p publish
-          find artifacts -type f \( -name "*.exe" -o -name "*.zip" \) -exec cp {} publish/ \;
+          find artifacts -type f \( -name "*.exe" -o -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} publish/ \;
           echo "=== Release assets ==="
           ls -la publish/
 
