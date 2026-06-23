@@ -71,7 +71,8 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release
-          cp -r "build/bin/PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.app" release/
+          cd "build/bin"
+          zip -r "../../release/PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.zip" "PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.app"
         shell: bash
 
       - uses: actions/upload-artifact@v4
@@ -89,13 +90,13 @@ jobs:
         with:
           path: artifacts
 
-      - name: Package and upload to release
+      - name: Collect release assets
         run: |
           mkdir -p publish
-          find artifacts -type f -name "*.exe" -exec cp {} publish/ \;
-          find artifacts -type d -name "*.app" -exec cp -r {} publish/ \;
-          cd publish
-          ls -la
+          find artifacts -type f \( -name "*.exe" -o -name "*.zip" \) -exec cp {} publish/ \;
+          echo "=== Release assets ==="
+          ls -la publish/
+
       - uses: softprops/action-gh-release@v2
         with:
           files: publish/*

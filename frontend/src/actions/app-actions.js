@@ -34,14 +34,12 @@ export function createAppActions({ root, api, store, feedback }) {
   }
 
   async function saveSettings() {
-    const contextWindowK = parseInt(root.querySelector('input[name="contextWindow"]')?.value, 10) || 256;
     const nextSettings = {
       piCommand: root.querySelector('input[name="piCommand"]').value.trim(),
       piSettingsPath: root.querySelector('input[name="piSettingsPath"]').value.trim(),
       piModelsPath: root.querySelector('input[name="piModelsPath"]').value.trim(),
       piSwitchConfigPath: root.querySelector('input[name="piSwitchConfigPath"]').value.trim(),
-      workingDir: root.querySelector('input[name="workingDir"]')?.value?.trim() || "",
-      contextWindow: contextWindowK * 1000
+      workingDir: root.querySelector('input[name="workingDir"]')?.value?.trim() || ""
     };
 
     try {

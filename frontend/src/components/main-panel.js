@@ -5,6 +5,15 @@ export function renderMainPanel(state, provider) {
   const selectedModelId = provider?.selectedModelId ?? models[0]?.id ?? "";
   const selectedModel = models.find((model) => model.id === selectedModelId);
   const defaultModelText = state.defaultModelId || "未设置";
+  const modelCw = selectedModel?.contextWindow ? Math.round(selectedModel.contextWindow / 1000) + "K" : "256K";
+  const defaultCwModelId = state.defaultModelId;
+  const defaultCwProvider = state.providers.find((p) =>
+    p.models?.some((m) => m.id === defaultCwModelId)
+  );
+  const defaultCwModel = defaultCwProvider?.models?.find((m) => m.id === defaultCwModelId);
+  const defaultCw = defaultCwModel?.contextWindow
+    ? Math.round(defaultCwModel.contextWindow / 1000) + "K"
+    : "";
 
   return `
     <main class="main-panel">
@@ -66,11 +75,13 @@ export function renderMainPanel(state, provider) {
             </button>
             <button class="text-button" data-set-default ${selectedModelId ? "" : "disabled"}>设为默认模型</button>
           </div>
+
         </section>
 
         <div class="default-summary">
-          <span>DEFAULT ROUTE</span>
-          <strong>${escapeHtml(state.defaultProviderId || "未设置")} / ${escapeHtml(defaultModelText)}</strong>
+          <span>DEFAULT</span>
+          <strong>${escapeHtml(state.defaultProviderId || "—")} / ${escapeHtml(defaultModelText)}</strong>
+          ${defaultCw ? `<span class="default-summary__ctx">context ${escapeHtml(defaultCw)}</span>` : ""}
         </div>
       </div>
 

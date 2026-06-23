@@ -50,16 +50,31 @@ function fetchModelsModal(payload) {
       <div class="model-check-list">
         ${models
           .map(
-            (model) => `
-              <label class="model-check-row">
-                <input type="checkbox" data-model-id="${escapeHtml(model.id)}" ${model.selected ? "checked" : ""}>
-                <span class="model-check-row__box"></span>
-                <span>
-                  <strong>${escapeHtml(model.name)}</strong>
-                  <small>${model.reasoning ? "推理模型" : "通用模型"}</small>
-                </span>
-              </label>
-            `
+            (model) => {
+              const cw = model.contextWindow ? Math.round(model.contextWindow / 1000) : 256;
+              return `
+              <div class="model-check-row">
+                <label class="model-check-row__main">
+                  <input type="checkbox" data-model-id="${escapeHtml(model.id)}" ${model.selected ? "checked" : ""}>
+                  <span class="model-check-row__box"></span>
+                  <span>
+                    <strong>${escapeHtml(model.name)}</strong>
+                    <small>${model.reasoning ? "推理模型" : "通用模型"}</small>
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  class="model-cw-input"
+                  data-cw-model="${escapeHtml(model.id)}"
+                  value="${cw}"
+                  min="1"
+                  placeholder="上下文 K"
+                  title="上下文窗口 (K)"
+                  autocomplete="off"
+                >
+              </div>
+            `;
+            }
           )
           .join("")}
       </div>
@@ -79,8 +94,6 @@ function settingsModal(settings) {
     </label>
   `;
 
-  const contextWindowK = settings.contextWindow ? Math.round(settings.contextWindow / 1000) : 256;
-
   return modalFrame({
     wide: true,
     title: "应用设置",
@@ -91,10 +104,6 @@ function settingsModal(settings) {
         ${settingsField("Pi 模型文件", "piModelsPath", settings.piModelsPath)}
         ${settingsField("Pi Switch 配置", "piSwitchConfigPath", settings.piSwitchConfigPath)}
         ${settingsField("工作目录", "workingDir", settings.workingDir || "")}
-        <label class="form-field">
-          <span class="form-field__label">上下文窗口 (K)</span>
-          <input name="contextWindow" type="number" min="1" value="${contextWindowK}" autocomplete="off">
-        </label>
       </div>
     `,
     actions: `

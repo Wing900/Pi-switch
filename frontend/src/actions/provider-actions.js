@@ -89,7 +89,13 @@ export function createProviderActions({ root, api, store, providerForm, feedback
     if (!modal || modal.kind !== "fetch-models") return;
 
     const selected = Array.from(root.querySelectorAll("[data-model-id]:checked"))
-      .map((checkbox) => modal.payload.models.find((model) => model.id === checkbox.dataset.modelId))
+      .map((checkbox) => {
+        const model = modal.payload.models.find((m) => m.id === checkbox.dataset.modelId);
+        if (!model) return null;
+        const cwInput = root.querySelector(`[data-cw-model="${model.id}"]`);
+        const cwK = parseInt(cwInput?.value, 10) || 256;
+        return { ...model, contextWindow: cwK * 1000 };
+      })
       .filter(Boolean);
 
     try {
