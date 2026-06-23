@@ -9,7 +9,7 @@
   <a href="https://github.com/Wing900/Pi-switch/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
   <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.22-00ADD8?style=flat-square&logo=go" alt="Go"></a>
   <a href="https://wails.io"><img src="https://img.shields.io/badge/Wails-v2-FF6B6B?style=flat-square" alt="Wails"></a>
-  <a href="https://github.com/Wing900/Pi-switch"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey?style=flat-square" alt="Platform"></a>
+  <a href="https://github.com/Wing900/Pi-switch"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square" alt="Platform"></a>
 </p>
 
 ## 介绍
