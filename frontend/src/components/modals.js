@@ -62,16 +62,19 @@ function fetchModelsModal(payload) {
                     <small>${model.reasoning ? "推理模型" : "通用模型"}</small>
                   </span>
                 </label>
-                <input
-                  type="number"
-                  class="model-cw-input"
-                  data-cw-model="${escapeHtml(model.id)}"
-                  value="${cw}"
-                  min="1"
-                  placeholder="上下文 K"
-                  title="上下文窗口 (K)"
-                  autocomplete="off"
-                >
+                <div class="model-cw-wrap">
+                  <input
+                    type="number"
+                    class="model-cw-input"
+                    data-cw-model="${escapeHtml(model.id)}"
+                    value="${cw}"
+                    min="1"
+                    placeholder="256"
+                    title="上下文窗口 (K tokens)"
+                    autocomplete="off"
+                  >
+                  <span class="model-cw-unit">K</span>
+                </div>
               </div>
             `;
             }

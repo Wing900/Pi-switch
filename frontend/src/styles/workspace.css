@@ -95,6 +95,8 @@
   max-height: 240px;
   padding: 6px 0;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   border: 0;
   border-radius: 6px;
   background: var(--surface-raised);
@@ -104,6 +106,10 @@
   transform: translateY(-5px) scaleY(0.98);
   transform-origin: top center;
   transition: opacity 160ms ease, transform 220ms var(--ease-out), visibility 160ms;
+}
+
+.model-select__menu::-webkit-scrollbar {
+  display: none;
 }
 
 .model-select.is-open .model-select__menu {
@@ -182,6 +188,7 @@
 .default-summary__ctx {
   color: var(--ink-muted);
   font-size: 10px;
+  margin-left: 8px;
 }
 
 .status-footer {

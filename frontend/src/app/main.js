@@ -23,7 +23,6 @@ const store = createStore({
     piSwitchConfigPath: ""
   },
   presets: PRESETS,
-  logs: [],
   modal: null,
   drawer: null,
   modelMenuOpen: false
@@ -51,7 +50,6 @@ async function bootstrap() {
       defaultProviderId: data.defaultProviderId,
       defaultModelId: data.defaultModelId,
       settings: data.settings,
-      logs: data.logs,
       drawer: null,
       modelMenuOpen: false
     }));

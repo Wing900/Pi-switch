@@ -58,7 +58,6 @@ export function createProviderFormController({ root, api, store, getCurrentProvi
             selectedProviderId: nextProvider.id,
             defaultProviderId:
               state.defaultProviderId === persistedId ? nextProvider.id : state.defaultProviderId,
-            logs: log ? [`已保存 Provider：${nextProvider.name}`, ...state.logs] : state.logs,
             drawer: { kind: "provider", providerId: nextProvider.id }
           }),
           { notify: false }

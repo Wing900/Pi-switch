@@ -10,8 +10,7 @@ export function createAppActions({ root, api, store, feedback }) {
       store.setState((state) => ({
         ...state,
         defaultProviderId: provider.id,
-        defaultModelId: provider.selectedModelId,
-        logs: [`默认模型已切换为：${provider.selectedModelId}`, ...state.logs]
+        defaultModelId: provider.selectedModelId
       }));
     } catch (error) {
       feedback.showError("设置默认模型失败", error);
@@ -24,10 +23,6 @@ export function createAppActions({ root, api, store, feedback }) {
 
     try {
       await api.executeLaunchPi(provider.id, provider.selectedModelId);
-      store.setState((state) => ({
-        ...state,
-        logs: [`已启动：${provider.id}/${provider.selectedModelId}`, ...state.logs]
-      }));
     } catch (error) {
       feedback.showError("启动终端失败", error);
     }
@@ -47,8 +42,7 @@ export function createAppActions({ root, api, store, feedback }) {
       store.setState((state) => ({
         ...state,
         settings: nextSettings,
-        modal: null,
-        logs: ["已保存 Pi 路径设置。", ...state.logs]
+        modal: null
       }));
     } catch (error) {
       feedback.showError("保存应用设置失败", error);

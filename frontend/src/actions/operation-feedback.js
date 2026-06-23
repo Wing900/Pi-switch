@@ -3,14 +3,13 @@ export function errorMessage(error) {
 }
 
 export function createOperationFeedback(store) {
-  function showResult({ status, title, message, details = [], log }) {
+  function showResult({ status, title, message, details = [] }) {
     store.setState((state) => ({
       ...state,
       modal: {
         kind: "operation-result",
         payload: { status, title, message, details }
-      },
-      logs: log ? [log, ...state.logs] : state.logs
+      }
     }));
   }
 

@@ -81,7 +81,7 @@ export function renderMainPanel(state, provider) {
         <div class="default-summary">
           <span>DEFAULT</span>
           <strong>${escapeHtml(state.defaultProviderId || "—")} / ${escapeHtml(defaultModelText)}</strong>
-          ${defaultCw ? `<span class="default-summary__ctx">context ${escapeHtml(defaultCw)}</span>` : ""}
+          ${defaultCw ? `<span class="default-summary__ctx">CONTEXT ${escapeHtml(defaultCw)}</span>` : ""}
         </div>
       </div>
 

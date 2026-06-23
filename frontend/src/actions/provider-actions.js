@@ -21,7 +21,6 @@ export function createProviderActions({ root, api, store, providerForm, feedback
         ...state,
         providers: [...state.providers, providerToUse],
         selectedProviderId: providerToUse.id,
-        logs: [`已新增 Provider：${providerToUse.name}`, ...state.logs],
         modal: null,
         drawer: { kind: "provider", providerId: providerToUse.id }
       }));
@@ -46,7 +45,6 @@ export function createProviderActions({ root, api, store, providerForm, feedback
           defaultProviderId: state.defaultProviderId === provider.id ? fallback?.id ?? "" : state.defaultProviderId,
           defaultModelId:
             state.defaultProviderId === provider.id ? fallback?.selectedModelId ?? "" : state.defaultModelId,
-          logs: [`已删除 Provider：${provider.name}`, ...state.logs],
           drawer: null,
           modal: null
         };
@@ -76,8 +74,7 @@ export function createProviderActions({ root, api, store, providerForm, feedback
             providerId: provider.id,
             models: fetched.map((model) => ({ ...model, selected: true }))
           }
-        },
-        logs: [`已获取模型：${provider.name}`, ...state.logs]
+        }
       }));
     } catch (error) {
       feedback.showError("获取模型失败", error);
@@ -107,8 +104,7 @@ export function createProviderActions({ root, api, store, providerForm, feedback
             ? { ...provider, models: selected, selectedModelId: selected[0]?.id ?? "" }
             : provider
         ),
-        modal: null,
-        logs: [`已导入 ${selected.length} 个模型。`, ...state.logs]
+        modal: null
       }));
     } catch (error) {
       feedback.showError("导入模型失败", error);
