@@ -11,7 +11,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.1",
+  version: "0.0.0.2",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
@@ -128,8 +128,7 @@ const clickActions = {
   "data-import-models": providerActions.importModels,
   "data-delete-provider": confirmProviderDeletion,
   "data-set-default": appActions.setDefault,
-  "data-launch-pi": appActions.prepareLaunch,
-  "data-confirm-launch": appActions.confirmLaunch,
+  "data-launch-pi": appActions.directLaunch,
   "data-save-settings": appActions.saveSettings,
   "data-window-minimise": () => api.minimiseWindow(),
   "data-window-toggle-maximise": () => api.toggleMaximiseWindow(),

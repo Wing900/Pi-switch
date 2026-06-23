@@ -18,23 +18,7 @@ export function createAppActions({ root, api, store, feedback }) {
     }
   }
 
-  async function prepareLaunch() {
-    const provider = currentProvider(store.getState());
-    if (!provider) return;
-
-    try {
-      const payload = await api.launchPi(provider.id, provider.selectedModelId);
-      store.setState((state) => ({
-        ...state,
-        modal: { kind: "launch-preview", payload },
-        logs: [`准备启动：${payload.command}`, ...state.logs]
-      }));
-    } catch (error) {
-      feedback.showError("启动准备失败", error);
-    }
-  }
-
-  async function confirmLaunch() {
+  async function directLaunch() {
     const provider = currentProvider(store.getState());
     if (!provider) return;
 
@@ -42,7 +26,6 @@ export function createAppActions({ root, api, store, feedback }) {
       await api.executeLaunchPi(provider.id, provider.selectedModelId);
       store.setState((state) => ({
         ...state,
-        modal: null,
         logs: [`已启动：${provider.id}/${provider.selectedModelId}`, ...state.logs]
       }));
     } catch (error) {
@@ -71,5 +54,5 @@ export function createAppActions({ root, api, store, feedback }) {
     }
   }
 
-  return { setDefault, prepareLaunch, confirmLaunch, saveSettings };
+  return { setDefault, directLaunch, saveSettings };
 }

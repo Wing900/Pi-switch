@@ -14,11 +14,11 @@ function apiModeOptions(selectedValue) {
     .join("");
 }
 
-function field({ label, name, value }) {
+function field({ label, name, value, type = "text" }) {
   return `
     <label class="form-field">
       <span class="form-field__label">${label}</span>
-      <input type="text" name="${name}" value="${escapeHtml(value)}" autocomplete="off">
+      <input type="${type}" name="${name}" value="${escapeHtml(value)}" autocomplete="off">
     </label>
   `;
 }
@@ -42,6 +42,7 @@ export function renderProviderDrawer(state, provider) {
         <section class="form-section">
           ${field({ label: "显示名称", name: "name", value: provider.name })}
           ${field({ label: "API 基础地址", name: "baseUrl", value: provider.baseUrl })}
+          ${field({ label: "API 密钥", name: "apiKeyLiteral", value: provider.apiKeyLiteral, type: "password" })}
           <label class="form-field">
             <span class="form-field__label">接口协议</span>
             <select name="api">${apiModeOptions(provider.api || "openai-completions")}</select>

@@ -17,7 +17,9 @@ function providerFromForm(root, provider) {
     id: readField(root, "id", provider.id),
     name: readField(root, "name", provider.name),
     baseUrl: readField(root, "baseUrl", provider.baseUrl),
-    api: readField(root, "api", provider.api)
+    api: readField(root, "api", provider.api),
+    apiKeyLiteral: readField(root, "apiKeyLiteral", provider.apiKeyLiteral),
+    apiKeyEnv: ""
   };
 }
 
@@ -79,11 +81,14 @@ export function createProviderFormController({ root, api, store, getCurrentProvi
     if (timer) {
       window.clearTimeout(timer);
     }
-    setStatus(root, "saving", "等待保存");
+    const nameValue = readField(root, "name", "");
+    const noName = nameValue.trim() === "";
+    const delay = noName ? 5000 : 500;
+    setStatus(root, "saving", noName ? "等待保存（名称未填写，延迟5s）" : "等待保存");
     timer = window.setTimeout(() => {
       timer = null;
       void commit();
-    }, 500);
+    }, delay);
   }
 
   function cancel() {

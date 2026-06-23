@@ -1,4 +1,4 @@
-import { escapeHtml } from "./view-utils.js";
+import { escapeHtml, extractHost } from "./view-utils.js";
 
 export function renderMainPanel(state, provider) {
   const models = provider?.models ?? [];
@@ -9,7 +9,7 @@ export function renderMainPanel(state, provider) {
   return `
     <main class="main-panel">
       <div class="main-topbar" data-wails-drag>
-        <span class="topbar-context">${escapeHtml(provider?.host || "Provider workspace")}</span>
+        <span class="topbar-context">${escapeHtml(extractHost(provider?.baseUrl))}</span>
         <div class="window-actions">
           <button class="window-symbol" data-window-minimise aria-label="最小化">−</button>
           <button class="window-symbol" data-window-toggle-maximise aria-label="最大化">□</button>

@@ -108,21 +108,6 @@ export function renderModal(state) {
   if (modal.kind === "fetch-models") return fetchModelsModal(modal.payload);
   if (modal.kind === "settings") return settingsModal(state.settings);
 
-  if (modal.kind === "launch-preview") {
-    return modalFrame({
-      wide: true,
-      title: "启动 Pi Agent",
-      description: modal.payload.command,
-      body: `<div class="result-list">${modal.payload.checklist
-        .map((item) => `<div class="result-row"><span></span><p>${escapeHtml(item)}</p></div>`)
-        .join("")}</div>`,
-      actions: `
-        <button class="text-button" data-close-modal>取消</button>
-        <button class="text-button text-button--accent" data-confirm-launch>启动终端</button>
-      `
-    });
-  }
-
   if (modal.kind === "add-provider") {
     return modalFrame({
       wide: true,

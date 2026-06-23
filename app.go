@@ -16,7 +16,7 @@ import (
 	"piswitch/internal/system"
 )
 
-const appVersion = "0.0.0.1"
+const appVersion = "0.0.0.2"
 
 type App struct {
 	ctx     context.Context
@@ -264,6 +264,21 @@ func (a *App) UpdateSettings(input config.AppSettings) error {
 func (a *App) ExecuteLaunchPi(providerID string, modelID string) error {
 	cfg, err := a.service.Load()
 	if err != nil {
+		return err
+	}
+	current, err := cfg.ProviderByID(providerID)
+	if err != nil {
+		return err
+	}
+	current.SelectedModelID = modelID
+	if err := pi.WriteModels(cfg.Settings.PiModelsPath, current); err != nil {
+		return err
+	}
+	if err := pi.MergeDefaults(cfg.Settings.PiSettingsPath, pi.DefaultSettings{
+		DefaultProvider:      providerID,
+		DefaultModel:         modelID,
+		DefaultThinkingLevel: "off",
+	}); err != nil {
 		return err
 	}
 	command := pi.BuildCommand(cfg.Settings.PiCommand, providerID, modelID)

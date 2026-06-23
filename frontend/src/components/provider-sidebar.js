@@ -1,7 +1,7 @@
-import { escapeHtml } from "./view-utils.js";
+import { escapeHtml, extractHost } from "./view-utils.js";
 
 function providerEndpoint(provider) {
-  return provider.host || provider.baseUrl || "尚未配置端点";
+  return extractHost(provider.baseUrl);
 }
 
 function providerRows(state) {
