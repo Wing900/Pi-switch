@@ -1,24 +1,54 @@
 :root {
-  --canvas: #c9c8c3;
-  --surface: rgba(238, 237, 232, 0.9);
-  --surface-raised: rgba(248, 247, 242, 0.94);
-  --surface-muted: rgba(229, 227, 221, 0.88);
-  --surface-sidebar: #faf9f5;
-  --ink: #0d0e0c;
-  --ink-secondary: #3d3f3b;
-  --ink-muted: #686a65;
-  --accent: #242522;
-  --accent-strong: #090a09;
-  --accent-soft: rgba(17, 18, 16, 0.105);
-  --success: #526b58;
-  --danger: #9b443d;
-  --line: rgba(17, 18, 16, 0.09);
-  --line-subtle: rgba(17, 18, 16, 0.05);
-  --line-strong: rgba(17, 18, 16, 0.25);
-  --shadow-float: 0 24px 70px rgba(17, 18, 16, 0.16);
+  --color-bg-left: #fcfcfd;
+  --color-bg-right-base: #ffffff;
+  --color-bg-right-glass: rgba(246, 246, 248, 0.65);
+  --color-bg-halo: rgba(13, 13, 13, 0.03);
+  --color-surface-raised: rgba(252, 252, 253, 0.92);
+  --color-surface-muted: rgba(246, 246, 248, 0.82);
+
+  --color-logo: #0d0d0d;
+  --color-primary: #0d0d0d;
+  --color-accent: #3a4354;
+  --color-accent-soft: rgba(58, 67, 84, 0.08);
+
+  --color-success: #3e7b66;
+  --color-success-bg: rgba(62, 123, 102, 0.08);
+  --color-danger: #c05c5a;
+  --color-danger-bg: rgba(192, 92, 90, 0.08);
+  --color-info: #5e6b7a;
+
+  --text-primary: #121212;
+  --text-regular: #4a4a4f;
+  --text-secondary: #8a8a93;
+  --text-disabled: #c4c4c9;
+
+  --color-divider: rgba(13, 13, 13, 0.06);
+  --color-divider-strong: rgba(13, 13, 13, 0.15);
+  --color-hover-bg: rgba(13, 13, 13, 0.04);
+  --color-input-bg: rgba(13, 13, 13, 0.03);
+
+  --shadow-input-focus: 0 0 0 1px rgba(13, 13, 13, 0.15), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(13, 13, 13, 0.04);
+  --shadow-float: 0 24px 70px rgba(13, 13, 13, 0.12);
+
+  --canvas: #eeeeef;
+  --surface: var(--color-bg-right-glass);
+  --surface-raised: var(--color-surface-raised);
+  --surface-muted: var(--color-surface-muted);
+  --surface-sidebar: var(--color-bg-left);
+  --ink: var(--text-primary);
+  --ink-secondary: var(--text-regular);
+  --ink-muted: var(--text-secondary);
+  --accent: var(--color-accent);
+  --accent-strong: var(--color-primary);
+  --accent-soft: var(--color-accent-soft);
+  --success: var(--color-success);
+  --danger: var(--color-danger);
+  --line: var(--color-divider);
+  --line-subtle: var(--color-divider);
+  --line-strong: var(--color-divider-strong);
   --font-ui: "Microsoft YaHei UI", "PingFang SC", sans-serif;
   --font-display: "Bahnschrift", "Microsoft YaHei UI", sans-serif;
   --radius-shell: 12px;
-  --radius-control: 6px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }

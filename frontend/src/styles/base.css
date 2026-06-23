@@ -29,11 +29,12 @@ button {
 button:disabled,
 select:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  color: var(--text-disabled);
+  opacity: 0.72;
 }
 
 button:focus-visible {
-  outline: 1px solid rgba(17, 18, 16, 0.24);
+  outline: 1px solid var(--color-divider-strong);
   outline-offset: 2px;
 }
 
@@ -46,26 +47,25 @@ input,
 select {
   width: 100%;
   min-height: 38px;
-  padding: 0 2px;
+  padding: 0 10px;
   border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
+  border-radius: 4px;
+  background: var(--color-input-bg);
   color: var(--ink);
   font-size: 11px;
   outline: none;
-  transition: border-color 160ms ease, background-color 160ms ease;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
 }
 
 input:hover,
 select:hover {
-  border-bottom-color: var(--line-strong);
+  background: var(--color-hover-bg);
 }
 
 input:focus,
 select:focus {
-  border-bottom-color: var(--line);
-  background: rgba(17, 18, 16, 0.035);
+  background: #ffffff;
+  box-shadow: var(--shadow-input-focus);
 }
 
 .eyebrow {
@@ -90,7 +90,7 @@ select:focus {
   right: 0;
   bottom: 0;
   left: 0;
-  height: 1px;
+  height: 2px;
   content: "";
   background: currentColor;
   transform: scaleX(0);
@@ -109,7 +109,7 @@ select:focus {
 }
 
 .text-button--accent {
-  color: var(--accent-strong);
+  color: var(--color-accent);
 }
 
 .text-button--danger {
@@ -127,7 +127,7 @@ select:focus {
   right: 2px;
   bottom: 0;
   left: 2px;
-  height: 1px;
+  height: 2px;
   content: "";
   background: currentColor;
   transform: scaleX(0);

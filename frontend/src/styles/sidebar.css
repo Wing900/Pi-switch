@@ -4,7 +4,7 @@
   flex-direction: column;
   background: var(--surface-sidebar);
   color: var(--ink);
-  box-shadow: inset -1px 0 rgba(17, 18, 16, 0.055);
+  box-shadow: inset -1px 0 var(--color-divider);
 }
 
 .aside-header {
@@ -16,13 +16,11 @@
 }
 
 .brand-mark {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   flex: none;
-  border-radius: 7px;
+  border-radius: 6px;
   object-fit: cover;
-  opacity: 0.78;
-  filter: contrast(0.9);
 }
 
 .aside-header strong {
@@ -55,30 +53,28 @@
   position: relative;
   display: flex;
   align-items: stretch;
-  border-top: 1px solid var(--line-subtle);
-}
-
-.provider-row:last-child {
-  border-bottom: 1px solid var(--line-subtle);
 }
 
 .provider-row__select {
+  position: relative;
   flex: 1;
   min-width: 0;
   padding: 16px 7px;
   display: flex;
   align-items: center;
-  gap: 11px;
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .provider-row__marker {
+  position: absolute;
+  top: 50%;
+  left: -7px;
   width: 2px;
   height: 24px;
-  flex: none;
   background: transparent;
+  transform: translateY(-50%);
   transition: background-color 160ms ease, height 220ms var(--ease-out);
 }
 
@@ -115,7 +111,7 @@
 }
 
 .provider-row:hover {
-  background: rgba(17, 18, 16, 0.025);
+  background: var(--color-hover-bg);
 }
 
 .provider-row:hover .provider-row__configure,
@@ -129,12 +125,12 @@
 }
 
 .provider-row.active {
-  background: rgba(17, 18, 16, 0.045);
+  background: var(--color-accent-soft);
 }
 
 .provider-row.active .provider-row__marker {
   height: 34px;
-  background: var(--accent);
+  background: var(--color-accent);
 }
 
 .provider-row.active .provider-row__name {

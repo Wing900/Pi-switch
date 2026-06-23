@@ -11,6 +11,7 @@ export function renderApp(state) {
     <div class="window-shell">
       ${renderProviderSidebar(state)}
       ${renderMainPanel(state, provider)}
+      ${state.drawer ? '<button class="drawer-scrim" data-close-drawer aria-label="关闭配置"></button>' : ""}
       ${renderProviderDrawer(state, provider)}
       ${renderModal(state)}
     </div>

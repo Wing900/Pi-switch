@@ -22,7 +22,7 @@
 .provider-heading__signal {
   width: 36px;
   height: 1px;
-  background: var(--accent);
+  background: var(--color-accent);
 }
 
 .provider-heading > span:nth-child(2) {
@@ -58,7 +58,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--line);
+  border: 0;
+  border-radius: 4px;
+  background: var(--color-input-bg);
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 16px;
@@ -69,8 +71,8 @@
 
 .model-select__trigger:hover,
 .model-select.is-open .model-select__trigger {
-  border-bottom-color: var(--line-strong);
-  background: var(--accent-soft);
+  background: #ffffff;
+  box-shadow: var(--shadow-input-focus);
 }
 
 .model-select__arrow {
@@ -93,9 +95,10 @@
   max-height: 240px;
   padding: 6px 0;
   overflow-y: auto;
-  border: 1px solid var(--line-subtle);
+  border: 0;
+  border-radius: 6px;
   background: var(--surface-raised);
-  box-shadow: 0 18px 42px rgba(17, 18, 16, 0.13);
+  box-shadow: var(--shadow-dropdown);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-5px) scaleY(0.98);
@@ -127,7 +130,7 @@
 .model-select__option.is-selected {
   padding-left: 19px;
   color: var(--ink);
-  background: var(--accent-soft);
+  background: var(--color-hover-bg);
 }
 
 .primary-action {

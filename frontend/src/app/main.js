@@ -6,6 +6,7 @@ import { PRESETS } from "../config/presets.js";
 import { createProviderFormController } from "../controllers/provider-form-controller.js";
 import { WailsApi } from "../services/wails-api.js";
 import { createStore } from "../state/store.js";
+import { transitionState } from "../ui/transitions.js";
 
 const root = document.querySelector("#app");
 const api = new WailsApi();
@@ -70,7 +71,11 @@ function closeModal() {
 
 async function selectProvider(providerId) {
   if (store.getState().drawer && !(await providerForm.commit())) return;
-  store.setState((state) => ({ ...state, selectedProviderId: providerId, modelMenuOpen: false }));
+  transitionState(
+    store,
+    (state) => ({ ...state, selectedProviderId: providerId, modelMenuOpen: false }),
+    "provider"
+  );
 }
 
 async function openProvider(providerId) {

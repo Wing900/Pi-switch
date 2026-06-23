@@ -1,3 +1,14 @@
+.drawer-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 19;
+  background: rgba(13, 13, 13, 0.08);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: default;
+  animation: drawerScrimIn 220ms ease both;
+}
+
 .drawer {
   position: absolute;
   inset: 0 0 0 auto;
@@ -7,16 +18,27 @@
   flex-direction: column;
   border-left: 1px solid var(--line-subtle);
   background: var(--surface-raised);
-  backdrop-filter: blur(22px) saturate(0.86);
-  box-shadow: -18px 0 48px rgba(23, 33, 38, 0.11);
-  transform: translateX(100%);
-  opacity: 0;
-  transition: transform 360ms var(--ease-out), opacity 220ms ease;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: -18px 0 48px rgba(13, 13, 13, 0.08);
+  animation: drawerEnter 260ms var(--ease-out) both;
+}
+
+@keyframes drawerScrimIn {
+  from {
+    opacity: 0;
+  }
 }
 
 .drawer.open {
-  opacity: 1;
   transform: translateX(0);
+}
+
+@keyframes drawerEnter {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
 }
 
 .drawer-header {
@@ -48,7 +70,6 @@
 
 .form-section {
   padding: 24px 0 8px;
-  border-top: 1px solid var(--line-subtle);
 }
 
 .form-field {
@@ -58,7 +79,7 @@
 
 .form-field__label {
   display: block;
-  margin-bottom: 1px;
+  margin-bottom: 7px;
   color: var(--ink-secondary);
   font-size: 11px;
 }
@@ -93,7 +114,7 @@
 }
 
 .drawer-status[data-status="saving"] {
-  color: var(--accent);
+  color: var(--color-info);
 }
 
 .drawer-status[data-status="saved"] {
