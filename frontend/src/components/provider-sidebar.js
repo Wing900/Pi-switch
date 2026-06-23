@@ -1,4 +1,5 @@
 import { escapeHtml, extractHost } from "./view-utils.js";
+import piLogo from "../assets/pi-logo.png";
 
 function providerEndpoint(provider) {
   return extractHost(provider.baseUrl);
@@ -31,7 +32,7 @@ export function renderProviderSidebar(state) {
   return `
     <aside class="sidebar">
       <header class="aside-header">
-        <img class="brand-mark" src="./src/assets/pi-logo.png" alt="Pi Switch">
+        <img class="brand-mark" src="${piLogo}" alt="Pi Switch">
         <strong>Pi Switch</strong>
       </header>
 
