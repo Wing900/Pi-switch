@@ -79,6 +79,8 @@ function settingsModal(settings) {
     </label>
   `;
 
+  const contextWindowK = settings.contextWindow ? Math.round(settings.contextWindow / 1000) : 256;
+
   return modalFrame({
     wide: true,
     title: "应用设置",
@@ -88,6 +90,11 @@ function settingsModal(settings) {
         ${settingsField("Pi 设置文件", "piSettingsPath", settings.piSettingsPath)}
         ${settingsField("Pi 模型文件", "piModelsPath", settings.piModelsPath)}
         ${settingsField("Pi Switch 配置", "piSwitchConfigPath", settings.piSwitchConfigPath)}
+        ${settingsField("工作目录", "workingDir", settings.workingDir || "")}
+        <label class="form-field">
+          <span class="form-field__label">上下文窗口 (K)</span>
+          <input name="contextWindow" type="number" min="1" value="${contextWindowK}" autocomplete="off">
+        </label>
       </div>
     `,
     actions: `

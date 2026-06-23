@@ -16,7 +16,7 @@ import (
 	"piswitch/internal/system"
 )
 
-const appVersion = "0.0.0.2"
+const appVersion = "0.0.0.3"
 
 type App struct {
 	ctx     context.Context
@@ -282,7 +282,7 @@ func (a *App) ExecuteLaunchPi(providerID string, modelID string) error {
 		return err
 	}
 	command := pi.BuildCommand(cfg.Settings.PiCommand, providerID, modelID)
-	return pi.OpenCommandInTerminal(command)
+	return pi.OpenCommandInTerminal(command, cfg.Settings.WorkingDir)
 }
 
 func firstNonEmpty(values ...string) string {

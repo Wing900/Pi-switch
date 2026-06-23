@@ -7,6 +7,8 @@ export namespace config {
 	    piSwitchConfigPath: string;
 	    lastDefaultProviderId?: string;
 	    lastDefaultModelId?: string;
+	    contextWindow: number;
+	    workingDir: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppSettings(source);
@@ -20,6 +22,8 @@ export namespace config {
 	        this.piSwitchConfigPath = source["piSwitchConfigPath"];
 	        this.lastDefaultProviderId = source["lastDefaultProviderId"];
 	        this.lastDefaultModelId = source["lastDefaultModelId"];
+	        this.contextWindow = source["contextWindow"];
+	        this.workingDir = source["workingDir"];
 	    }
 	}
 	export class AppState {

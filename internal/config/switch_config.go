@@ -18,6 +18,8 @@ type AppSettings struct {
 	PiSwitchConfigPath    string `json:"piSwitchConfigPath"`
 	LastDefaultProviderID string `json:"lastDefaultProviderId,omitempty"`
 	LastDefaultModelID    string `json:"lastDefaultModelId,omitempty"`
+	ContextWindow         int    `json:"contextWindow"`
+	WorkingDir            string `json:"workingDir"`
 }
 
 type SwitchConfig struct {
@@ -173,6 +175,15 @@ func NormalizeSettings(input AppSettings) AppSettings {
 	}
 	if input.PiSwitchConfigPath == "" {
 		input.PiSwitchConfigPath = defaultPaths.PiSwitchConfigPath
+	}
+	if input.ContextWindow <= 0 {
+		input.ContextWindow = 256000
+	}
+	if input.WorkingDir == "" {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			input.WorkingDir = home
+		}
 	}
 	return input
 }
