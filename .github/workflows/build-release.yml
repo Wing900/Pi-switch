@@ -20,7 +20,7 @@ jobs:
           node-version: '20'
 
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.9.1
 
       - name: Build for Windows
         run: |
@@ -28,7 +28,7 @@ jobs:
           npm install
           npm run build
           cd ..
-          wails build -platform windows/amd64 -o "PiSwitch-${{ github.ref_name }}-windows-amd64.exe"
+          wails build -platform windows/amd64
 
       - name: Prepare release assets
         run: |
@@ -58,7 +58,7 @@ jobs:
           node-version: '20'
 
       - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.9.1
 
       - name: Build for macOS (${{ matrix.arch }})
         run: |
@@ -66,7 +66,7 @@ jobs:
           npm install
           npm run build
           cd ..
-          wails build -platform darwin/${{ matrix.arch }} -o "PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}"
+          wails build -platform darwin/${{ matrix.arch }}
 
       - name: Prepare release assets
         run: |
