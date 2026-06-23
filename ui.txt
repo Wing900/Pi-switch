@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi Switch - Desktop</title>
+    <style>
+        :root {
+            --bg-mist: #F5F7F5;      /* 莫奈底色：更清爽的灰 */
+            --water-blue: #8FB1BB;   /* 水蓝色 */
+            --leaf-green: #A9C2A6;   /* 嫩绿 */
+            --petal-pink: #D8B4BC;   /* 花粉 */
+            --text-main: #4A4E4D;    /* 深灰 */
+            --border-line: #E0E4DE;  /* 极简线 */
+            --surface: #FFFFFF;      /* 纯净白 */
+            --radius-lg: 12px;       /* 桌面端大圆角 */
+            --radius-sm: 6px;        /* 内部小圆角 */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Inter", system-ui, sans-serif; }
+
+        body {
+            background-color: var(--bg-mist);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* 桌面级矩形容器 */
+        #app {
+            width: 960px;
+            height: 600px;
+            background: var(--surface);
+            border: 1px solid var(--border-line);
+            border-radius: var(--radius-lg);
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.03);
+        }
+
+        /* 左侧分栏：服务商选择 */
+        aside {
+            width: 320px;
+            border-right: 1px solid var(--border-line);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .aside-header {
+            padding: 32px 24px 16px;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .provider-grid {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .provider-card {
+            padding: 20px;
+            border: 1px solid var(--border-line);
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .provider-card:hover {
+            border-color: var(--water-blue);
+            background: #F9FAFB;
+        }
+
+        .provider-card.active {
+            border-color: var(--water-blue);
+            background: rgba(143, 177, 187, 0.05);
+        }
+
+        .provider-card.active::after {
+            content: "●";
+            position: absolute;
+            right: 16px;
+            top: 20px;
+            color: var(--water-blue);
+            font-size: 10px;
+        }
+
+        .card-name { font-weight: 500; font-size: 15px; display: block; margin-bottom: 4px; }
+        .card-meta { font-size: 12px; color: #999; }
+
+        /* 右侧分栏：操作主区 */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #FAFBFA;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 48px;
+            text-align: center;
+        }
+
+        .hero-icon {
+            width: 64px;
+            height: 64px;
+            background: white;
+            border: 1px solid var(--border-line);
+            border-radius: var(--radius-lg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+            color: var(--water-blue);
+        }
+
+        .model-select-area {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 32px;
+        }
+
+        .btn-launch {
+            background: var(--text-main);
+            color: white;
+            border: none;
+            padding: 16px 48px;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-launch:hover {
+            background: var(--water-blue);
+            transform: translateY(-2px);
+        }
+
+        /* 桌面端侧边抽屉 (Slide Panel) */
+        #drawer {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 400px;
+            height: 100%;
+            background: var(--surface);
+            border-left: 1px solid var(--border-line);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.02);
+        }
+
+        #drawer.open { transform: translateX(0); }
+
+        .drawer-header {
+            padding: 32px 24px;
+            border-bottom: 1px solid var(--border-line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-body { padding: 32px 24px; flex: 1; overflow-y: auto; }
+
+        .form-group { margin-bottom: 24px; }
+        label { display: block; font-size: 12px; font-weight: 600; color: #ABB2A9; margin-bottom: 8px; text-transform: uppercase; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-line);
+            border-radius: var(--radius-sm);
+            outline: none;
+            font-size: 14px;
+        }
+
+        .btn-ghost {
+            background: none;
+            border: 1px solid var(--border-line);
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-config-trigger {
+            font-size: 12px;
+            color: var(--water-blue);
+            cursor: pointer;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .status-footer {
+            padding: 16px 24px;
+            font-size: 12px;
+            color: #AAA;
+            border-top: 1px solid var(--border-line);
+            background: white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- 左边栏 -->
+    <aside>
+        <div class="aside-header">Pi Switch</div>
+        <div class="provider-grid">
+            <div class="provider-card active" onclick="select(this, 'DeepSeek', 'deepseek-chat')">
+                <span class="card-name">DeepSeek</span>
+                <span class="card-meta">api.deepseek.com</span>
+                <div class="btn-config-trigger" onclick="openDrawer('DeepSeek', event)">Configure</div>
+            </div>
+            <div class="provider-card" onclick="select(this, 'Ollama', 'qwen2.5-coder')">
+                <span class="card-name">Ollama</span>
+                <span class="card-meta">localhost:11434</span>
+                <div class="btn-config-trigger" onclick="openDrawer('Ollama', event)">Configure</div>
+            </div>
+            <div class="provider-card" onclick="select(this, 'OpenRouter', 'claude-3.5')">
+                <span class="card-name">OpenRouter</span>
+                <span class="card-meta">openrouter.ai</span>
+                <div class="btn-config-trigger" onclick="openDrawer('OpenRouter', event)">Configure</div>
+            </div>
+        </div>
+        <div style="padding: 24px;">
+            <button class="btn-ghost" style="width: 100%; border-style: dashed;">+ Add Provider</button>
+        </div>
+    </aside>
+
+    <!-- 主操作区 -->
+    <main>
+        <div class="main-content">
+            <div class="hero-icon">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <h2 style="margin-bottom: 8px; font-weight: 500;" id="main-title">DeepSeek</h2>
+            <p style="color: #999; font-size: 14px; margin-bottom: 32px;" id="main-sub">Ready to initiate piAgent session</p>
+            
+            <div class="model-select-area">
+                <label style="text-align: left;">Active Model</label>
+                <select style="width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-line); background: white; outline: none;">
+                    <option id="opt-1">deepseek-chat</option>
+                    <option id="opt-2">deepseek-reasoner</option>
+                </select>
+            </div>
+
+            <button class="btn-launch">Launch piAgent</button>
+        </div>
+        <div class="status-footer">
+            System Status: <span style="color: var(--leaf-green)">Connected</span> • Config: ~/.pi/agent/settings.json
+        </div>
+    </main>
+
+    <!-- 侧滑抽屉 -->
+    <section id="drawer">
+        <div class="drawer-header">
+            <span style="font-size: 18px; font-weight: 600;">Settings</span>
+            <span style="cursor: pointer; font-size: 24px; color: #CCC;" onclick="closeDrawer()">&times;</span>
+        </div>
+        <div class="drawer-body">
+            <div class="form-group">
+                <label>Provider Name</label>
+                <input type="text" id="p-name" value="DeepSeek">
+            </div>
+            <div class="form-group">
+                <label>Base URL</label>
+                <input type="text" value="https://api.deepseek.com/v1">
+            </div>
+            <div class="form-group">
+                <label>API Key Environment Variable</label>
+                <input type="text" value="DEEPSEEK_API_KEY">
+                <div style="font-size: 12px; color: var(--leaf-green); margin-top: 8px;">✓ Valid environment variable found</div>
+            </div>
+            <div class="form-group">
+                <label>Model Discovery</label>
+                <button class="btn-ghost" style="width: 100%;">Fetch Available Models</button>
+            </div>
+        </div>
+        <div style="padding: 24px; border-top: 1px solid var(--border-line); display: flex; gap: 12px;">
+            <button class="btn-ghost" style="flex: 1;" onclick="closeDrawer()">Cancel</button>
+            <button class="btn-launch" style="flex: 1; padding: 12px;" onclick="closeDrawer()">Save</button>
+        </div>
+    </section>
+</div>
+
+<script>
+    function select(el, name, model) {
+        document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('main-title').innerText = name;
+        document.getElementById('opt-1').innerText = model;
+        document.getElementById('opt-2').innerText = model + '-alt';
+    }
+
+    function openDrawer(name, event) {
+        event.stopPropagation();
+        document.getElementById('p-name').value = name;
+        document.getElementById('drawer').classList.add('open');
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawer').classList.remove('open');
+    }
+</script>
+
+</body>
+</html>

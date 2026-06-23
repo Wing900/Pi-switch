@@ -1,0 +1,12 @@
+frontend/node_modules/
+frontend/dist/
+build/bin/
+dist/
+release/
+
+*.exe
+*.exe~
+*.zip
+
+.DS_Store
+Thumbs.db
