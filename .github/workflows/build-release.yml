@@ -70,9 +70,18 @@ jobs:
 
       - name: Prepare release assets
         run: |
+          echo "=== build/bin contents ==="
+          ls -la build/bin/
           mkdir -p release
           cd "build/bin"
-          mv "PiSwitch.app" "PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.app"
+          # Find the .app directory
+          APP_NAME=$(ls -d *.app 2>/dev/null | head -1)
+          if [ -z "$APP_NAME" ]; then
+            echo "No .app found, checking for executable..."
+            ls -la
+            exit 1
+          fi
+          mv "$APP_NAME" "PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.app"
           zip -r "../../release/PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.zip" "PiSwitch-${{ github.ref_name }}-macos-${{ matrix.arch }}.app"
         shell: bash
 
