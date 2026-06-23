@@ -87,6 +87,7 @@ func Normalize(input Config) Config {
 	input.APIKeyEnv = strings.TrimSpace(input.APIKeyEnv)
 	input.APIKeyLiteral = strings.TrimSpace(input.APIKeyLiteral)
 	input.API = strings.TrimSpace(input.API)
+	input.Models = NormalizeModels(input.Models)
 	if input.Type == "" {
 		input.Type = "openai-compatible"
 	}
@@ -96,10 +97,59 @@ func Normalize(input Config) Config {
 	if input.Host == "" {
 		input.Host = deriveHost(input.BaseURL)
 	}
-	if input.SelectedModelID == "" && len(input.Models) > 0 {
+	if !hasModel(input.Models, input.SelectedModelID) && len(input.Models) > 0 {
 		input.SelectedModelID = input.Models[0].ID
 	}
 	return input
+}
+
+func NormalizeModels(models []ModelInfo) []ModelInfo {
+	if len(models) == 0 {
+		return nil
+	}
+
+	normalized := make([]ModelInfo, 0, len(models))
+	seen := make(map[string]int, len(models))
+	for _, model := range models {
+		model.ID = strings.TrimSpace(model.ID)
+		model.Name = strings.TrimSpace(model.Name)
+		if model.ID == "" {
+			continue
+		}
+		if model.Name == "" {
+			model.Name = model.ID
+		}
+		if existingIndex, ok := seen[model.ID]; ok {
+			normalized[existingIndex] = model
+			continue
+		}
+		seen[model.ID] = len(normalized)
+		normalized = append(normalized, model)
+	}
+	return normalized
+}
+
+func MergeModels(existing []ModelInfo, incoming []ModelInfo) []ModelInfo {
+	merged := NormalizeModels(existing)
+	next := NormalizeModels(incoming)
+	if len(next) == 0 {
+		return merged
+	}
+
+	indexByID := make(map[string]int, len(merged))
+	for index, model := range merged {
+		indexByID[model.ID] = index
+	}
+
+	for _, model := range next {
+		if existingIndex, ok := indexByID[model.ID]; ok {
+			merged[existingIndex] = model
+			continue
+		}
+		indexByID[model.ID] = len(merged)
+		merged = append(merged, model)
+	}
+	return merged
 }
 
 func deriveHost(baseURL string) string {
@@ -116,12 +166,23 @@ func deriveHost(baseURL string) string {
 }
 
 func EnsureModel(config Config, modelID string) error {
-	for _, model := range config.Models {
-		if model.ID == modelID {
-			return nil
-		}
+	if hasModel(config.Models, modelID) {
+		return nil
 	}
 	return errors.New("模型不存在：" + modelID)
+}
+
+func hasModel(models []ModelInfo, modelID string) bool {
+	modelID = strings.TrimSpace(modelID)
+	if modelID == "" {
+		return false
+	}
+	for _, model := range models {
+		if model.ID == modelID {
+			return true
+		}
+	}
+	return false
 }
 
 func FormatModelCount(count int) string {

@@ -16,7 +16,7 @@ import (
 	"piswitch/internal/system"
 )
 
-const appVersion = "0.0.0.5"
+const appVersion = "0.0.0.6"
 
 type App struct {
 	ctx     context.Context
@@ -187,12 +187,13 @@ func (a *App) ImportModels(providerID string, models []provider.ModelInfo) error
 	if err != nil {
 		return err
 	}
-	current.Models = models
-	if len(models) > 0 {
-		current.SelectedModelID = models[0].ID
-	}
+	current.Models = provider.MergeModels(current.Models, models)
+	current = provider.Normalize(current)
 	cfg.UpsertProvider(current, providerID)
-	return a.service.Save(cfg)
+	if err := a.service.Save(cfg); err != nil {
+		return err
+	}
+	return pi.WriteModels(cfg.Settings.PiModelsPath, current)
 }
 
 func (a *App) SetDefaultModel(providerID string, modelID string) error {

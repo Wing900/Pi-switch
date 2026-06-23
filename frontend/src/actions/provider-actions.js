@@ -7,6 +7,30 @@ export function currentProvider(state) {
   return state.providers.find((provider) => provider.id === state.selectedProviderId) ?? state.providers[0];
 }
 
+function mergeModels(existing, incoming) {
+  const merged = [];
+  const indexById = new Map();
+
+  for (const model of [...(existing ?? []), ...(incoming ?? [])]) {
+    if (!model?.id) continue;
+    if (indexById.has(model.id)) {
+      merged[indexById.get(model.id)] = {
+        ...merged[indexById.get(model.id)],
+        ...model,
+        name: model.name?.trim?.() || model.id
+      };
+      continue;
+    }
+    indexById.set(model.id, merged.length);
+    merged.push({
+      ...model,
+      name: model.name?.trim?.() || model.id
+    });
+  }
+
+  return merged;
+}
+
 export function createProviderActions({ root, api, store, providerForm, feedback }) {
   async function createFromPreset(presetId) {
     const nextProvider = createProviderFromPreset(presetId);
@@ -99,11 +123,17 @@ export function createProviderActions({ root, api, store, providerForm, feedback
       await api.importModels(modal.payload.providerId, selected);
       store.setState((state) => ({
         ...state,
-        providers: state.providers.map((provider) =>
-          provider.id === modal.payload.providerId
-            ? { ...provider, models: selected, selectedModelId: selected[0]?.id ?? "" }
-            : provider
-        ),
+        providers: state.providers.map((provider) => {
+          if (provider.id !== modal.payload.providerId) {
+            return provider;
+          }
+          const mergedModels = mergeModels(provider.models, selected);
+          const selectedModelId =
+            mergedModels.some((model) => model.id === provider.selectedModelId)
+              ? provider.selectedModelId
+              : mergedModels[0]?.id ?? "";
+          return { ...provider, models: mergedModels, selectedModelId };
+        }),
         modal: null
       }));
     } catch (error) {
