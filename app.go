@@ -16,7 +16,7 @@ import (
 	"piswitch/internal/system"
 )
 
-const appVersion = "0.0.0.7"
+const appVersion = "0.0.0.8"
 
 type App struct {
 	ctx     context.Context
