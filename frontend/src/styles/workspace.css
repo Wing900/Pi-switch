@@ -71,7 +71,7 @@
 
 .model-select__trigger:hover,
 .model-select.is-open .model-select__trigger {
-  background: #ffffff;
+  background: var(--surface-raised);
   box-shadow: var(--shadow-input-focus);
 }
 

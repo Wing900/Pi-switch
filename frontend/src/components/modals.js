@@ -97,11 +97,24 @@ function settingsModal(settings) {
     </label>
   `;
 
+  const toggleField = (label, name, checked) => `
+    <label class="settings-toggle">
+      <span class="settings-toggle__copy">
+        <span class="form-field__label">${label}</span>
+      </span>
+      <span class="switch">
+        <input type="checkbox" name="${name}" ${checked ? "checked" : ""}>
+        <span class="switch__track" aria-hidden="true"></span>
+      </span>
+    </label>
+  `;
+
   return modalFrame({
     wide: true,
     title: "应用设置",
     body: `
       <div class="settings-form">
+        ${toggleField("黑暗模式", "darkMode", !!settings.darkMode)}
         ${settingsField("Pi 命令", "piCommand", settings.piCommand)}
         ${settingsField("Pi 设置文件", "piSettingsPath", settings.piSettingsPath)}
         ${settingsField("Pi 模型文件", "piModelsPath", settings.piModelsPath)}
@@ -111,7 +124,6 @@ function settingsModal(settings) {
     `,
     actions: `
       <button class="text-button" data-close-modal>取消</button>
-      <button class="text-button text-button--accent" data-save-settings>保存设置</button>
     `
   });
 }

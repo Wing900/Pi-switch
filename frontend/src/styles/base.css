@@ -64,7 +64,7 @@ select:hover {
 
 input:focus,
 select:focus {
-  background: #ffffff;
+  background: var(--surface-raised);
   box-shadow: var(--shadow-input-focus);
 }
 

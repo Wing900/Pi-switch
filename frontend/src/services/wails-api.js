@@ -1,7 +1,15 @@
 import { CheckEnvVar, CreateProvider, DeleteProvider, ExecuteLaunchPi, FetchModels, GetAppState, ImportModels, LaunchPi, SetDefaultModel, TestConnection, UpdateProvider, UpdateSettings } from "../../wailsjs/go/main/App";
-import { Quit, WindowMinimise, WindowToggleMaximise } from "../../wailsjs/runtime/runtime";
+import { Quit, WindowMinimise, WindowSetDarkTheme, WindowSetLightTheme, WindowToggleMaximise } from "../../wailsjs/runtime/runtime";
 
 export class WailsApi {
+  applyWindowTheme(isDark) {
+    if (isDark) {
+      WindowSetDarkTheme();
+      return;
+    }
+    WindowSetLightTheme();
+  }
+
   async getAppState() {
     return GetAppState();
   }
@@ -48,7 +56,8 @@ export class WailsApi {
   }
 
   async updateSettings(settings) {
-    return UpdateSettings(settings);
+    await UpdateSettings(settings);
+    this.applyWindowTheme(settings.darkMode);
   }
 
   async checkEnvVar(name) {

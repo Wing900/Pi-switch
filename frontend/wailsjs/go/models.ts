@@ -5,6 +5,7 @@ export namespace config {
 	    piSettingsPath: string;
 	    piModelsPath: string;
 	    piSwitchConfigPath: string;
+	    darkMode: boolean;
 	    lastDefaultProviderId?: string;
 	    lastDefaultModelId?: string;
 	    workingDir: string;
@@ -19,6 +20,7 @@ export namespace config {
 	        this.piSettingsPath = source["piSettingsPath"];
 	        this.piModelsPath = source["piModelsPath"];
 	        this.piSwitchConfigPath = source["piSwitchConfigPath"];
+	        this.darkMode = source["darkMode"];
 	        this.lastDefaultProviderId = source["lastDefaultProviderId"];
 	        this.lastDefaultModelId = source["lastDefaultModelId"];
 	        this.workingDir = source["workingDir"];

@@ -11,7 +11,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.2",
+  version: "0.0.0.7",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
@@ -20,7 +20,8 @@ const store = createStore({
     piCommand: "pi",
     piSettingsPath: "",
     piModelsPath: "",
-    piSwitchConfigPath: ""
+    piSwitchConfigPath: "",
+    darkMode: false
   },
   presets: PRESETS,
   modal: null,
@@ -39,6 +40,13 @@ const providerForm = createProviderFormController({
 const providerActions = createProviderActions({ root, api, store, providerForm, feedback });
 const appActions = createAppActions({ root, api, store, feedback });
 
+function applyDocumentTheme(settings) {
+  const theme = settings?.darkMode ? "dark" : "light";
+  document.documentElement.dataset.theme = theme;
+  document.body.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+}
+
 async function bootstrap() {
   try {
     const data = await api.getAppState();
@@ -53,6 +61,8 @@ async function bootstrap() {
       drawer: null,
       modelMenuOpen: false
     }));
+    applyDocumentTheme(data.settings);
+    api.applyWindowTheme(!!data.settings?.darkMode);
   } catch (error) {
     feedback.showError("应用初始化失败", error);
   }
@@ -127,7 +137,6 @@ const clickActions = {
   "data-delete-provider": confirmProviderDeletion,
   "data-set-default": appActions.setDefault,
   "data-launch-pi": appActions.directLaunch,
-  "data-save-settings": appActions.saveSettings,
   "data-window-minimise": () => api.minimiseWindow(),
   "data-window-toggle-maximise": () => api.toggleMaximiseWindow(),
   "data-window-close": () => api.closeWindow()
@@ -161,10 +170,18 @@ function bindClickEvents() {
 }
 
 function bindFormEvents() {
-  root.addEventListener("change", (event) => {
+  root.addEventListener("change", async (event) => {
     const target = event.target;
     if (target.closest(".drawer") && target.matches("input[name], select[name]")) {
       providerForm.schedule();
+      return;
+    }
+
+    if (target.closest(".settings-form") && target.matches("input[name], select[name]")) {
+      await appActions.saveSettings({
+        closeModal: false,
+        immediateTheme: target.name === "darkMode"
+      });
     }
   });
 
@@ -176,6 +193,7 @@ function bindFormEvents() {
 }
 
 store.subscribe((state) => {
+  applyDocumentTheme(state.settings);
   root.innerHTML = renderApp(state);
   document.title = `Pi Switch ${state.version}`;
 });

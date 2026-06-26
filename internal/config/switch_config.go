@@ -16,6 +16,7 @@ type AppSettings struct {
 	PiSettingsPath        string `json:"piSettingsPath"`
 	PiModelsPath          string `json:"piModelsPath"`
 	PiSwitchConfigPath    string `json:"piSwitchConfigPath"`
+	DarkMode              bool   `json:"darkMode"`
 	LastDefaultProviderID string `json:"lastDefaultProviderId,omitempty"`
 	LastDefaultModelID    string `json:"lastDefaultModelId,omitempty"`
 	WorkingDir            string `json:"workingDir"`

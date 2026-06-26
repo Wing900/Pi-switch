@@ -2,7 +2,7 @@
   position: absolute;
   inset: 0;
   z-index: 19;
-  background: rgba(13, 13, 13, 0.08);
+  background: var(--color-drawer-scrim);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   cursor: default;
@@ -20,7 +20,7 @@
   background: var(--surface-raised);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  box-shadow: -18px 0 48px rgba(13, 13, 13, 0.08);
+  box-shadow: var(--shadow-drawer);
   animation: drawerEnter 260ms var(--ease-out) both;
 }
 

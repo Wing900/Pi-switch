@@ -61,7 +61,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  -webkit-app-region: drag;
+  --wails-draggable: drag;
+  cursor: move;
+  user-select: none;
 }
 
 .topbar-context {
@@ -71,11 +73,26 @@
   letter-spacing: 0.08em;
 }
 
+.main-topbar *,
+.aside-header * {
+  --wails-draggable: drag;
+  cursor: move;
+  user-select: none;
+}
+
 .window-actions {
   display: flex;
   align-items: center;
   gap: 15px;
-  -webkit-app-region: no-drag;
+  --wails-draggable: no-drag;
+  cursor: default;
+  user-select: auto;
+}
+
+.window-actions * {
+  --wails-draggable: no-drag;
+  cursor: default;
+  user-select: auto;
 }
 
 .window-symbol {

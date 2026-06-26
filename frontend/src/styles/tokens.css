@@ -26,10 +26,14 @@
   --color-divider-strong: rgba(13, 13, 13, 0.15);
   --color-hover-bg: rgba(13, 13, 13, 0.04);
   --color-input-bg: rgba(13, 13, 13, 0.03);
+  --color-modal-backdrop: rgba(13, 13, 13, 0.18);
+  --color-drawer-scrim: rgba(13, 13, 13, 0.08);
 
   --shadow-input-focus: 0 0 0 1px rgba(13, 13, 13, 0.15), 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(13, 13, 13, 0.04);
   --shadow-float: 0 24px 70px rgba(13, 13, 13, 0.12);
+  --shadow-drawer: -18px 0 48px rgba(13, 13, 13, 0.08);
+  --shadow-switch-knob: 0 2px 6px rgba(0, 0, 0, 0.14);
 
   --canvas: #eeeeef;
   --surface: var(--color-bg-right-glass);
@@ -51,4 +55,46 @@
   --font-display: "Bahnschrift", "Microsoft YaHei UI", sans-serif;
   --radius-shell: 12px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-theme="dark"],
+body[data-theme="dark"],
+[data-theme="dark"] {
+  --color-bg-left: #141518;
+  --color-bg-right-base: #181a1f;
+  --color-bg-right-glass: rgba(28, 31, 37, 0.72);
+  --color-bg-halo: rgba(160, 170, 190, 0.09);
+  --color-surface-raised: rgba(31, 34, 40, 0.94);
+  --color-surface-muted: rgba(25, 27, 33, 0.88);
+
+  --color-logo: #f2f4f7;
+  --color-primary: #f2f4f7;
+  --color-accent: #aab4c3;
+  --color-accent-soft: rgba(170, 180, 195, 0.12);
+
+  --color-success: #8dc5b2;
+  --color-success-bg: rgba(141, 197, 178, 0.14);
+  --color-danger: #e09a96;
+  --color-danger-bg: rgba(224, 154, 150, 0.14);
+  --color-info: #a6b0bf;
+
+  --text-primary: #f3f5f8;
+  --text-regular: #cad0d8;
+  --text-secondary: #8f98a7;
+  --text-disabled: #5f6672;
+
+  --color-divider: rgba(255, 255, 255, 0.08);
+  --color-divider-strong: rgba(255, 255, 255, 0.18);
+  --color-hover-bg: rgba(255, 255, 255, 0.05);
+  --color-input-bg: rgba(255, 255, 255, 0.06);
+  --color-modal-backdrop: rgba(5, 7, 11, 0.48);
+  --color-drawer-scrim: rgba(5, 7, 11, 0.24);
+
+  --shadow-input-focus: 0 0 0 1px rgba(243, 245, 248, 0.14), 0 8px 24px rgba(0, 0, 0, 0.24);
+  --shadow-dropdown: 0 12px 28px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-float: 0 26px 80px rgba(0, 0, 0, 0.38);
+  --shadow-drawer: -18px 0 48px rgba(0, 0, 0, 0.32);
+  --shadow-switch-knob: 0 4px 10px rgba(0, 0, 0, 0.36);
+
+  --canvas: #101114;
 }
