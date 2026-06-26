@@ -71,6 +71,10 @@
   font-size: 12px;
 }
 
+.modal-footer__manual-action {
+  margin-right: auto;
+}
+
 .result-list {
   border-top: 1px solid var(--line-subtle);
 }
@@ -230,6 +234,60 @@
 .model-cw-unit {
   color: var(--ink-muted);
   font-size: 10px;
+}
+
+.manual-model-form {
+  border-top: 1px solid var(--line-subtle);
+}
+
+.model-check-row--manual {
+  padding-inline: 0;
+  align-items: end;
+}
+
+.manual-model-field {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.manual-model-field--id {
+  flex: 1;
+}
+
+.manual-model-field--cw {
+  flex: none;
+}
+
+.manual-model-field__label {
+  color: var(--ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.manual-model-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 6px;
+  background: var(--color-input-bg);
+  color: var(--ink);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.manual-model-input:focus {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-input-focus);
+}
+
+.model-cw-input--manual {
+  width: 48px;
+  padding-bottom: 4px;
+  color: var(--ink);
+  border-bottom-color: var(--line-subtle);
 }
 
 .settings-form {

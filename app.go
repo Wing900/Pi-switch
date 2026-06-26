@@ -81,7 +81,7 @@ func (a *App) CreateProvider(input provider.Config) error {
 		return err
 	}
 	cfg.UpsertProvider(input, "")
-	return a.service.Save(cfg)
+	return a.persistPiState(cfg)
 }
 
 func (a *App) UpdateProvider(id string, input provider.Config) error {
@@ -97,7 +97,7 @@ func (a *App) UpdateProvider(id string, input provider.Config) error {
 	if cfg.Settings.LastDefaultProviderID == id {
 		cfg.Settings.LastDefaultProviderID = input.ID
 	}
-	return a.service.Save(cfg)
+	return a.persistPiState(cfg)
 }
 
 func (a *App) DeleteProvider(id string) error {
@@ -110,7 +110,7 @@ func (a *App) DeleteProvider(id string) error {
 		cfg.Settings.LastDefaultProviderID = ""
 		cfg.Settings.LastDefaultModelID = ""
 	}
-	return a.service.Save(cfg)
+	return a.persistPiState(cfg)
 }
 
 func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
@@ -190,10 +190,7 @@ func (a *App) ImportModels(providerID string, models []provider.ModelInfo) error
 	current.Models = provider.MergeModels(current.Models, models)
 	current = provider.Normalize(current)
 	cfg.UpsertProvider(current, providerID)
-	if err := a.service.Save(cfg); err != nil {
-		return err
-	}
-	return pi.WriteModels(cfg.Settings.PiModelsPath, current)
+	return a.persistPiState(cfg)
 }
 
 func (a *App) SetDefaultModel(providerID string, modelID string) error {
@@ -210,17 +207,7 @@ func (a *App) SetDefaultModel(providerID string, modelID string) error {
 	cfg.Settings.LastDefaultProviderID = providerID
 	cfg.Settings.LastDefaultModelID = modelID
 
-	if err := a.service.Save(cfg); err != nil {
-		return err
-	}
-	if err := pi.WriteModels(cfg.Settings.PiModelsPath, current); err != nil {
-		return err
-	}
-	return pi.MergeDefaults(cfg.Settings.PiSettingsPath, pi.DefaultSettings{
-		DefaultProvider:      providerID,
-		DefaultModel:         modelID,
-		DefaultThinkingLevel: "off",
-	})
+	return a.persistPiState(cfg)
 }
 
 func (a *App) LaunchPi(providerID string, modelID string) (pi.LaunchPreview, error) {
@@ -272,18 +259,28 @@ func (a *App) ExecuteLaunchPi(providerID string, modelID string) error {
 		return err
 	}
 	current.SelectedModelID = modelID
-	if err := pi.WriteModels(cfg.Settings.PiModelsPath, current); err != nil {
-		return err
-	}
-	if err := pi.MergeDefaults(cfg.Settings.PiSettingsPath, pi.DefaultSettings{
-		DefaultProvider:      providerID,
-		DefaultModel:         modelID,
-		DefaultThinkingLevel: "off",
-	}); err != nil {
+	cfg.UpsertProvider(current, providerID)
+	cfg.Settings.LastDefaultProviderID = providerID
+	cfg.Settings.LastDefaultModelID = modelID
+	if err := a.persistPiState(cfg); err != nil {
 		return err
 	}
 	command := pi.BuildCommand(cfg.Settings.PiCommand, providerID, modelID)
 	return pi.OpenCommandInTerminal(command, cfg.Settings.WorkingDir)
+}
+
+func (a *App) persistPiState(cfg config.SwitchConfig) error {
+	if err := a.service.Save(cfg); err != nil {
+		return err
+	}
+	if err := pi.WriteAllModels(cfg.Settings.PiModelsPath, cfg.Providers); err != nil {
+		return err
+	}
+	return pi.MergeDefaults(cfg.Settings.PiSettingsPath, pi.DefaultSettings{
+		DefaultProvider:      cfg.Settings.LastDefaultProviderID,
+		DefaultModel:         cfg.Settings.LastDefaultModelID,
+		DefaultThinkingLevel: "off",
+	})
 }
 
 func firstNonEmpty(values ...string) string {

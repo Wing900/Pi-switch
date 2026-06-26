@@ -101,7 +101,20 @@ export function createProviderActions({ root, api, store, providerForm, feedback
         }
       }));
     } catch (error) {
-      feedback.showError("获取模型失败", error);
+      store.setState((state) => ({
+        ...state,
+        modal: {
+          kind: "operation-result",
+          payload: {
+            status: "error",
+            title: "获取模型失败",
+            message: error instanceof Error ? error.message : String(error ?? "未知错误"),
+            details: ["请检查配置后重试。"],
+            allowManualModel: true,
+            providerId: provider.id
+          }
+        }
+      }));
     }
   }
 
@@ -141,5 +154,61 @@ export function createProviderActions({ root, api, store, providerForm, feedback
     }
   }
 
-  return { createFromPreset, remove, fetchModels, importModels };
+  function openManualModel() {
+    const modal = store.getState().modal;
+    const providerId =
+      modal?.payload?.providerId || currentProvider(store.getState())?.id || "";
+    if (!providerId) return;
+    store.setState((state) => ({
+      ...state,
+      modal: {
+        kind: "manual-model",
+        payload: {
+          providerId,
+          modelId: "",
+          contextWindowK: 256
+        }
+      }
+    }));
+  }
+
+  async function importManualModel() {
+    const modal = store.getState().modal;
+    if (!modal || modal.kind !== "manual-model") return;
+
+    const modelId = root.querySelector('input[name="manualModelId"]')?.value?.trim();
+    const contextWindowK = parseInt(root.querySelector('input[name="manualContextWindow"]')?.value, 10) || 256;
+    if (!modelId) {
+      feedback.showError("导入模型失败", new Error("Model ID 不能为空"));
+      return;
+    }
+
+    const manualModel = {
+      id: modelId,
+      name: modelId,
+      contextWindow: contextWindowK * 1000,
+      reasoning: false
+    };
+
+    try {
+      await api.importModels(modal.payload.providerId, [manualModel]);
+      store.setState((state) => ({
+        ...state,
+        providers: state.providers.map((provider) => {
+          if (provider.id !== modal.payload.providerId) {
+            return provider;
+          }
+          const mergedModels = mergeModels(provider.models, [manualModel]);
+          const selectedModelId =
+            provider.selectedModelId?.trim() || mergedModels[0]?.id || manualModel.id;
+          return { ...provider, models: mergedModels, selectedModelId };
+        }),
+        modal: null
+      }));
+    } catch (error) {
+      feedback.showError("导入模型失败", error);
+    }
+  }
+
+  return { createFromPreset, remove, fetchModels, importModels, openManualModel, importManualModel };
 }

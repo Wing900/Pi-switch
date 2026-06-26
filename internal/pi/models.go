@@ -17,48 +17,46 @@ type providerPayload struct {
 }
 
 func WriteModels(path string, cfg provider.Config) error {
+	return WriteAllModels(path, []provider.Config{cfg})
+}
+
+func WriteAllModels(path string, providersConfig []provider.Config) error {
 	if err := system.BackupFile(path); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	key := cfg.APIKeyLiteral
-	if cfg.APIKeyEnv != "" {
-		key = "$" + cfg.APIKeyEnv
-	}
 	payload := map[string]any{}
 	if data, err := os.ReadFile(path); err == nil {
 		_ = json.Unmarshal(data, &payload)
 	}
-	providers, ok := payload["providers"].(map[string]any)
-	if !ok {
-		providers = map[string]any{}
-		payload["providers"] = providers
-	}
 
-	nextProvider := providerPayload{
-		BaseURL: cfg.BaseURL,
-		API:     cfg.API,
-		APIKey:  key,
-		Models:  cfg.Models,
+	providers := map[string]any{}
+	for _, cfg := range providersConfig {
+		key := cfg.APIKeyLiteral
+		if cfg.APIKeyEnv != "" {
+			key = "$" + cfg.APIKeyEnv
+		}
+
+		nextProvider := providerPayload{
+			BaseURL: cfg.BaseURL,
+			API:     cfg.API,
+			APIKey:  key,
+			Models:  cfg.Models,
+		}
+		encodedProvider, err := json.Marshal(nextProvider)
+		if err != nil {
+			return err
+		}
+
+		nextFields := map[string]any{}
+		if err := json.Unmarshal(encodedProvider, &nextFields); err != nil {
+			return err
+		}
+		providers[cfg.ID] = nextFields
 	}
-	encodedProvider, err := json.Marshal(nextProvider)
-	if err != nil {
-		return err
-	}
-	nextFields := map[string]any{}
-	if err := json.Unmarshal(encodedProvider, &nextFields); err != nil {
-		return err
-	}
-	currentFields, _ := providers[cfg.ID].(map[string]any)
-	if currentFields == nil {
-		currentFields = map[string]any{}
-	}
-	for field, value := range nextFields {
-		currentFields[field] = value
-	}
-	providers[cfg.ID] = currentFields
+	payload["providers"] = providers
 
 	data, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {

@@ -27,7 +27,10 @@ function resultModal(payload) {
           .map((item) => `<div class="result-row"><span></span><p>${escapeHtml(item)}</p></div>`)
           .join("")}</div>`
       : "",
-    actions: '<button class="text-button text-button--accent" data-close-modal>知道了</button>'
+    actions: `
+      ${payload.allowManualModel ? '<button class="text-button modal-footer__manual-action" data-open-manual-model>手动添加</button>' : ""}
+      <button class="text-button text-button--accent" data-close-modal>知道了</button>
+    `
   });
 }
 
@@ -89,6 +92,52 @@ function fetchModelsModal(payload) {
   });
 }
 
+function manualModelModal(payload) {
+  const contextWindowK = payload.contextWindowK || 256;
+  return modalFrame({
+    wide: true,
+    title: "手动添加模型",
+    description: "获取模型失败时，可手动录入当前提供商的模型配置。",
+    body: `
+      <div class="manual-model-form">
+        <div class="model-check-row model-check-row--manual">
+          <label class="manual-model-field manual-model-field--id">
+            <span class="manual-model-field__label">Model ID</span>
+            <input
+              type="text"
+              class="manual-model-input"
+              name="manualModelId"
+              value="${escapeHtml(payload.modelId || "")}"
+              placeholder="deepseek-v4-flash"
+              autocomplete="off"
+            >
+          </label>
+          <label class="manual-model-field manual-model-field--cw">
+            <span class="manual-model-field__label">Context</span>
+            <div class="model-cw-wrap">
+              <input
+                type="number"
+                class="model-cw-input model-cw-input--manual"
+                name="manualContextWindow"
+                value="${contextWindowK}"
+                min="1"
+                placeholder="256"
+                title="上下文窗口 (K tokens)"
+                autocomplete="off"
+              >
+              <span class="model-cw-unit">K</span>
+            </div>
+          </label>
+        </div>
+      </div>
+    `,
+    actions: `
+      <button class="text-button" data-close-modal>取消</button>
+      <button class="text-button text-button--accent" data-import-manual-model>导入模型</button>
+    `
+  });
+}
+
 function settingsModal(settings) {
   const settingsField = (label, name, value) => `
     <label class="form-field">
@@ -137,6 +186,7 @@ export function renderModal(state) {
   if (modal.kind === "operation-loading") return loadingModal(modal.payload);
   if (modal.kind === "operation-result") return resultModal(modal.payload);
   if (modal.kind === "fetch-models") return fetchModelsModal(modal.payload);
+  if (modal.kind === "manual-model") return manualModelModal(modal.payload);
   if (modal.kind === "settings") return settingsModal(state.settings);
 
   if (modal.kind === "add-provider") {

@@ -134,6 +134,8 @@ const clickActions = {
   "data-close-drawer": closeDrawer,
   "data-fetch-models": providerActions.fetchModels,
   "data-import-models": providerActions.importModels,
+  "data-open-manual-model": providerActions.openManualModel,
+  "data-import-manual-model": providerActions.importManualModel,
   "data-delete-provider": confirmProviderDeletion,
   "data-set-default": appActions.setDefault,
   "data-launch-pi": appActions.directLaunch,
