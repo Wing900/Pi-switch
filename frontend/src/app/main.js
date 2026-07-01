@@ -11,7 +11,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.7",
+  version: "0.0.0.9",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
