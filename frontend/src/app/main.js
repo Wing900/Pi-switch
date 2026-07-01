@@ -134,6 +134,7 @@ const clickActions = {
   "data-close-drawer": closeDrawer,
   "data-fetch-models": providerActions.fetchModels,
   "data-import-models": providerActions.importModels,
+  "data-toggle-model-selection-all": providerActions.toggleAllModelSelections,
   "data-open-manual-model": providerActions.openManualModel,
   "data-import-manual-model": providerActions.importManualModel,
   "data-delete-provider": confirmProviderDeletion,
@@ -174,6 +175,11 @@ function bindClickEvents() {
 function bindFormEvents() {
   root.addEventListener("change", async (event) => {
     const target = event.target;
+    if (target.matches("[data-model-id]")) {
+      providerActions.syncToggleAllButton();
+      return;
+    }
+
     if (target.closest(".drawer") && target.matches("input[name], select[name]")) {
       providerForm.schedule();
       return;

@@ -23,12 +23,33 @@ function providerFromForm(root, provider) {
   };
 }
 
+function validateProviderDraft(provider) {
+  if (!provider.id) return "Provider ID 不能为空";
+  if (!provider.name) return "Provider 名称不能为空";
+  if (!provider.baseUrl) return "Base URL 不能为空";
+  if (!provider.api) return "API 模式不能为空";
+  return "";
+}
+
 export function createProviderFormController({ root, api, store, getCurrentProvider, onError }) {
   let timer = null;
   let saveChain = Promise.resolve();
   let revision = 0;
 
-  function commit({ log = false } = {}) {
+  function showInvalidModal(message) {
+    store.setState((state) => ({
+      ...state,
+      modal: {
+        kind: "provider-invalid",
+        payload: {
+          title: "配置未完成",
+          message
+        }
+      }
+    }));
+  }
+
+  function commit({ showInvalidModal: shouldShowInvalidModal = true } = {}) {
     if (timer) {
       window.clearTimeout(timer);
       timer = null;
@@ -39,6 +60,15 @@ export function createProviderFormController({ root, api, store, getCurrentProvi
     }
 
     const nextProvider = providerFromForm(root, provider);
+    const validationMessage = validateProviderDraft(nextProvider);
+    if (validationMessage) {
+      setStatus(root, "error", validationMessage);
+      if (shouldShowInvalidModal) {
+        showInvalidModal(validationMessage);
+      }
+      return Promise.resolve(false);
+    }
+
     const currentRevision = ++revision;
     setStatus(root, "saving", "正在保存");
 
@@ -80,13 +110,24 @@ export function createProviderFormController({ root, api, store, getCurrentProvi
     if (timer) {
       window.clearTimeout(timer);
     }
-    const nameValue = readField(root, "name", "");
-    const noName = nameValue.trim() === "";
-    const delay = noName ? 5000 : 500;
-    setStatus(root, "saving", noName ? "等待保存（名称未填写，延迟5s）" : "等待保存");
+
+    const provider = getCurrentProvider(store.getState());
+    if (!provider) {
+      return;
+    }
+
+    const nextProvider = providerFromForm(root, provider);
+    const validationMessage = validateProviderDraft(nextProvider);
+    if (validationMessage) {
+      setStatus(root, "error", validationMessage);
+      return;
+    }
+
+    const delay = 500;
+    setStatus(root, "saving", "等待保存");
     timer = window.setTimeout(() => {
       timer = null;
-      void commit();
+      void commit({ showInvalidModal: false });
     }, delay);
   }
 

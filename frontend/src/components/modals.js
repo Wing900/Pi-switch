@@ -43,8 +43,20 @@ function loadingModal(payload) {
   });
 }
 
+function providerInvalidModal(payload) {
+  return modalFrame({
+    tone: "error",
+    title: payload.title,
+    description: payload.message,
+    actions: `
+      <button class="text-button text-button--accent" data-close-modal>继续编辑</button>
+    `
+  });
+}
+
 function fetchModelsModal(payload) {
   const models = payload.models ?? [];
+  const allSelected = models.length > 0 && models.every((model) => model.selected);
   return modalFrame({
     wide: true,
     title: "选择要导入的模型",
@@ -86,6 +98,7 @@ function fetchModelsModal(payload) {
       </div>
     `,
     actions: `
+      <button class="text-button modal-footer__manual-action" data-toggle-model-selection-all>${allSelected ? "全不选" : "全选"}</button>
       <button class="text-button" data-close-modal>取消</button>
       <button class="text-button text-button--accent" data-import-models>导入所选模型</button>
     `
@@ -185,6 +198,7 @@ export function renderModal(state) {
 
   if (modal.kind === "operation-loading") return loadingModal(modal.payload);
   if (modal.kind === "operation-result") return resultModal(modal.payload);
+  if (modal.kind === "provider-invalid") return providerInvalidModal(modal.payload);
   if (modal.kind === "fetch-models") return fetchModelsModal(modal.payload);
   if (modal.kind === "manual-model") return manualModelModal(modal.payload);
   if (modal.kind === "settings") return settingsModal(state.settings);

@@ -7,6 +7,19 @@ export function currentProvider(state) {
   return state.providers.find((provider) => provider.id === state.selectedProviderId) ?? state.providers[0];
 }
 
+function getModelCheckboxes(root) {
+  return Array.from(root.querySelectorAll("[data-model-id]"));
+}
+
+function syncToggleAllButton(root) {
+  const button = root.querySelector("[data-toggle-model-selection-all]");
+  if (!button) return;
+
+  const checkboxes = getModelCheckboxes(root);
+  const allSelected = checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked);
+  button.textContent = allSelected ? "全不选" : "全选";
+}
+
 function mergeModels(existing, incoming) {
   const merged = [];
   const indexById = new Map();
@@ -210,5 +223,23 @@ export function createProviderActions({ root, api, store, providerForm, feedback
     }
   }
 
-  return { createFromPreset, remove, fetchModels, importModels, openManualModel, importManualModel };
+  function toggleAllModelSelections() {
+    const checkboxes = getModelCheckboxes(root);
+    const nextChecked = checkboxes.some((checkbox) => !checkbox.checked);
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = nextChecked;
+    });
+    syncToggleAllButton(root);
+  }
+
+  return {
+    createFromPreset,
+    remove,
+    fetchModels,
+    importModels,
+    openManualModel,
+    importManualModel,
+    toggleAllModelSelections,
+    syncToggleAllButton: () => syncToggleAllButton(root)
+  };
 }
