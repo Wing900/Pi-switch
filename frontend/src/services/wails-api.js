@@ -1,7 +1,11 @@
-import { CheckEnvVar, CreateProvider, DeleteProvider, ExecuteLaunchPi, FetchModels, GetAppState, ImportModels, LaunchPi, SetDefaultModel, TestConnection, UpdateProvider, UpdateSettings } from "../../wailsjs/go/main/App";
-import { Quit, WindowMinimise, WindowSetDarkTheme, WindowSetLightTheme, WindowToggleMaximise } from "../../wailsjs/runtime/runtime";
+import { CheckEnvVar, CreateProvider, DeleteProvider, ExecuteLaunchPi, FetchModels, GetAppState, ImportModels, LaunchPi, ReplaceModels, SetDefaultModel, TestConnection, UpdateProvider, UpdateSettings } from "../../wailsjs/go/main/App";
+import { Quit, WindowMinimise, WindowSetDarkTheme, WindowSetLightTheme, WindowToggleMaximise, EventsOn } from "../../wailsjs/runtime/runtime";
 
 export class WailsApi {
+  onConfigChanged(callback) {
+    return EventsOn("pi:config-changed", () => callback());
+  }
+
   applyWindowTheme(isDark) {
     if (isDark) {
       WindowSetDarkTheme();
@@ -41,6 +45,10 @@ export class WailsApi {
 
   async importModels(providerId, models) {
     return ImportModels(providerId, models);
+  }
+
+  async replaceModels(providerId, models) {
+    return ReplaceModels(providerId, models);
   }
 
   async setDefaultModel(providerId, modelId) {

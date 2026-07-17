@@ -6,7 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"piswitch/internal/config"
@@ -16,11 +19,17 @@ import (
 	"piswitch/internal/system"
 )
 
-const appVersion = "0.0.0.9"
+const appVersion = "0.0.0.10"
+
+const configChangedEvent = "pi:config-changed"
 
 type App struct {
-	ctx     context.Context
-	service *config.Service
+	ctx         context.Context
+	service     *config.Service
+	watcher     *fsnotify.Watcher
+	watcherStop chan struct{}
+	writeMu     sync.Mutex
+	lastSelfWrite time.Time
 }
 
 func NewApp() *App {
@@ -30,6 +39,114 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.service = config.NewService(paths.DefaultPaths())
+	a.startConfigWatcher()
+}
+
+func (a *App) shutdown(ctx context.Context) {
+	a.stopConfigWatcher()
+}
+
+// markSelfWrite 在本应用主动写盘前调用，用于让 watcher 忽略自身触发的变更。
+func (a *App) markSelfWrite() {
+	a.writeMu.Lock()
+	a.lastSelfWrite = time.Now()
+	a.writeMu.Unlock()
+}
+
+func (a *App) recentSelfWrite() bool {
+	a.writeMu.Lock()
+	defer a.writeMu.Unlock()
+	return time.Since(a.lastSelfWrite) < 800*time.Millisecond
+}
+
+func (a *App) startConfigWatcher() {
+	cfg, err := a.service.Load()
+	if err != nil {
+		return
+	}
+	targets := make(map[string]struct{}, 2)
+	if cfg.Settings.PiSwitchConfigPath != "" {
+		targets[cfg.Settings.PiSwitchConfigPath] = struct{}{}
+	}
+	if cfg.Settings.PiSettingsPath != "" {
+		targets[cfg.Settings.PiSettingsPath] = struct{}{}
+	}
+	if len(targets) == 0 {
+		return
+	}
+
+	dirs := make(map[string]struct{}, len(targets))
+	for target := range targets {
+		dirs[filepath.Dir(target)] = struct{}{}
+	}
+
+	w, err := fsnotify.NewWatcher()
+	if err != nil {
+		return
+	}
+	for dir := range dirs {
+		if err := w.Add(dir); err != nil {
+			_ = w.Close()
+			return
+		}
+	}
+	a.watcher = w
+	a.watcherStop = make(chan struct{})
+
+	go func() {
+		var debounce *time.Timer
+		pending := false
+		fire := func() {
+			if !pending {
+				return
+			}
+			pending = false
+			if a.recentSelfWrite() {
+				return
+			}
+			runtime.EventsEmit(a.ctx, configChangedEvent)
+		}
+		for {
+			select {
+			case <-a.watcherStop:
+				if debounce != nil {
+					debounce.Stop()
+				}
+				return
+			case event, ok := <-w.Events:
+				if !ok {
+					return
+				}
+				if _, ok := targets[event.Name]; !ok {
+					continue
+				}
+				if event.Op&fsnotify.Write == 0 && event.Op&fsnotify.Create == 0 {
+					continue
+				}
+				pending = true
+				if debounce != nil {
+					debounce.Stop()
+				}
+				debounce = time.AfterFunc(300*time.Millisecond, fire)
+			case err, ok := <-w.Errors:
+				if !ok {
+					return
+				}
+				_ = err
+			}
+		}
+	}()
+}
+
+func (a *App) stopConfigWatcher() {
+	if a.watcherStop != nil {
+		close(a.watcherStop)
+		a.watcherStop = nil
+	}
+	if a.watcher != nil {
+		_ = a.watcher.Close()
+		a.watcher = nil
+	}
 }
 
 func (a *App) GetAppState() (config.AppState, error) {
@@ -193,6 +310,22 @@ func (a *App) ImportModels(providerID string, models []provider.ModelInfo) error
 	return a.persistPiState(cfg)
 }
 
+// ReplaceModels 用给定列表整体替换该 provider 的模型集合（替换语义，未传入的将被删除）。
+func (a *App) ReplaceModels(providerID string, models []provider.ModelInfo) error {
+	cfg, err := a.service.Load()
+	if err != nil {
+		return err
+	}
+	current, err := cfg.ProviderByID(providerID)
+	if err != nil {
+		return err
+	}
+	current.Models = provider.NormalizeModels(models)
+	current = provider.Normalize(current)
+	cfg.UpsertProvider(current, providerID)
+	return a.persistPiState(cfg)
+}
+
 func (a *App) SetDefaultModel(providerID string, modelID string) error {
 	cfg, err := a.service.Load()
 	if err != nil {
@@ -246,6 +379,7 @@ func (a *App) UpdateSettings(input config.AppSettings) error {
 		return err
 	}
 	cfg.Settings = config.NormalizeSettings(input)
+	a.markSelfWrite()
 	return a.service.Save(cfg)
 }
 
@@ -270,12 +404,15 @@ func (a *App) ExecuteLaunchPi(providerID string, modelID string) error {
 }
 
 func (a *App) persistPiState(cfg config.SwitchConfig) error {
+	a.markSelfWrite()
 	if err := a.service.Save(cfg); err != nil {
 		return err
 	}
+	a.markSelfWrite()
 	if err := pi.WriteAllModels(cfg.Settings.PiModelsPath, cfg.Providers); err != nil {
 		return err
 	}
+	a.markSelfWrite()
 	return pi.MergeDefaults(cfg.Settings.PiSettingsPath, pi.DefaultSettings{
 		DefaultProvider:      cfg.Settings.LastDefaultProviderID,
 		DefaultModel:         cfg.Settings.LastDefaultModelID,

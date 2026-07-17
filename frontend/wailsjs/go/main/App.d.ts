@@ -25,6 +25,8 @@ export function ListProviders():Promise<Array<provider.Config>>;
 
 export function OpenConfigFolder():Promise<void>;
 
+export function ReplaceModels(arg1:string,arg2:Array<provider.ModelInfo>):Promise<void>;
+
 export function SetDefaultModel(arg1:string,arg2:string):Promise<void>;
 
 export function TestConnection(arg1:string):Promise<provider.ConnectionTestResult>;

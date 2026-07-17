@@ -124,3 +124,65 @@
 .drawer-status[data-status="error"] {
   color: var(--danger);
 }
+
+.model-manage {
+  margin-top: 12px;
+}
+
+.model-manage__empty {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.model-manage__list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.model-manage__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: 6px;
+  background: var(--surface-soft, rgba(0, 0, 0, 0.02));
+}
+
+.model-manage__name {
+  font-size: 12px;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.model-manage__meta {
+  flex: 1 1 auto;
+  font-size: 10px;
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-manage__remove {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--danger, #d33);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.model-manage__remove:hover {
+  background: var(--danger, #d33);
+  color: #fff;
+}

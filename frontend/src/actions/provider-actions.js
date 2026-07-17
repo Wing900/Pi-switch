@@ -146,19 +146,19 @@ export function createProviderActions({ root, api, store, providerForm, feedback
       .filter(Boolean);
 
     try {
-      await api.importModels(modal.payload.providerId, selected);
+      await api.replaceModels(modal.payload.providerId, selected);
       store.setState((state) => ({
         ...state,
         providers: state.providers.map((provider) => {
           if (provider.id !== modal.payload.providerId) {
             return provider;
           }
-          const mergedModels = mergeModels(provider.models, selected);
+          const nextModels = selected;
           const selectedModelId =
-            mergedModels.some((model) => model.id === provider.selectedModelId)
+            nextModels.some((model) => model.id === provider.selectedModelId)
               ? provider.selectedModelId
-              : mergedModels[0]?.id ?? "";
-          return { ...provider, models: mergedModels, selectedModelId };
+              : nextModels[0]?.id ?? "";
+          return { ...provider, models: nextModels, selectedModelId };
         }),
         modal: null
       }));
@@ -232,6 +232,28 @@ export function createProviderActions({ root, api, store, providerForm, feedback
     syncToggleAllButton(root);
   }
 
+  async function deleteModel(modelId) {
+    const provider = currentProvider(store.getState());
+    if (!provider || !modelId) return;
+    const nextModels = (provider.models ?? []).filter((m) => m.id !== modelId);
+    try {
+      await api.replaceModels(provider.id, nextModels);
+      store.setState((state) => ({
+        ...state,
+        providers: state.providers.map((item) => {
+          if (item.id !== provider.id) return item;
+          const selectedModelId =
+            nextModels.some((m) => m.id === item.selectedModelId)
+              ? item.selectedModelId
+              : nextModels[0]?.id ?? "";
+          return { ...item, models: nextModels, selectedModelId };
+        })
+      }));
+    } catch (error) {
+      feedback.showError("移除模型失败", error);
+    }
+  }
+
   return {
     createFromPreset,
     remove,
@@ -240,6 +262,7 @@ export function createProviderActions({ root, api, store, providerForm, feedback
     openManualModel,
     importManualModel,
     toggleAllModelSelections,
+    deleteModel,
     syncToggleAllButton: () => syncToggleAllButton(root)
   };
 }

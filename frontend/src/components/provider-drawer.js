@@ -23,6 +23,37 @@ function field({ label, name, value, type = "text" }) {
   `;
 }
 
+function modelManageList(provider) {
+  const models = provider.models ?? [];
+  if (!models.length) {
+    return `
+      <div class="form-section model-manage">
+        <span class="form-field__label">模型管理</span>
+        <p class="model-manage__empty">暂无已导入模型，点击底部「获取模型」拉取。</p>
+      </div>
+    `;
+  }
+  return `
+    <div class="form-section model-manage">
+      <span class="form-field__label">模型管理（共 ${models.length} 个，点击 × 移除）</span>
+      <div class="model-manage__list">
+        ${models
+          .map((model) => {
+            const cw = model.contextWindow ? Math.round(model.contextWindow / 1000) + "K" : "";
+            return `
+              <div class="model-manage__row">
+                <span class="model-manage__name">${escapeHtml(model.name || model.id)}</span>
+                <span class="model-manage__meta">${escapeHtml(model.id)}${cw ? " · " + cw : ""}${model.reasoning ? " · 推理" : ""}</span>
+                <button class="model-manage__remove" data-delete-model="${escapeHtml(model.id)}" aria-label="移除 ${escapeHtml(model.name || model.id)}" title="移除">×</button>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
 export function renderProviderDrawer(state, provider) {
   if (!state.drawer || state.drawer.kind !== "provider" || !provider) {
     return "";
@@ -49,6 +80,8 @@ export function renderProviderDrawer(state, provider) {
           </label>
           ${field({ label: "Provider ID", name: "id", value: provider.id })}
         </section>
+
+        ${modelManageList(provider)}
       </div>
 
       <footer class="drawer-footer">

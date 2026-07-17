@@ -11,7 +11,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.9",
+  version: "0.0.0.10",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
@@ -49,23 +49,36 @@ function applyDocumentTheme(settings) {
 
 async function bootstrap() {
   try {
-    const data = await api.getAppState();
-    store.setState((state) => ({
-      ...state,
-      version: data.version,
-      providers: data.providers,
-      selectedProviderId: data.selectedProviderId || data.providers[0]?.id || "",
-      defaultProviderId: data.defaultProviderId,
-      defaultModelId: data.defaultModelId,
-      settings: data.settings,
-      drawer: null,
-      modelMenuOpen: false
-    }));
-    applyDocumentTheme(data.settings);
-    api.applyWindowTheme(!!data.settings?.darkMode);
+    await reloadConfig();
   } catch (error) {
     feedback.showError("应用初始化失败", error);
   }
+}
+
+async function reloadConfig() {
+  const data = await api.getAppState();
+  store.setState((state) => {
+    const stillExists = data.providers.some((p) => p.id === state.selectedProviderId);
+    const selectedProviderId = stillExists ? state.selectedProviderId : data.selectedProviderId || data.providers[0]?.id || "";
+    const drawerProviderStillExists =
+      state.drawer && state.drawer.kind === "provider"
+        ? data.providers.some((p) => p.id === state.drawer.providerId)
+        : true;
+    return {
+      ...state,
+      version: data.version,
+      providers: data.providers,
+      selectedProviderId,
+      defaultProviderId: data.defaultProviderId,
+      defaultModelId: data.defaultModelId,
+      settings: data.settings,
+      drawer: drawerProviderStillExists ? state.drawer : null,
+      modelMenuOpen: false
+    };
+  });
+  applyDocumentTheme(data.settings);
+  api.applyWindowTheme(!!data.settings?.darkMode);
+  return data;
 }
 
 function openModal(kind) {
@@ -163,6 +176,7 @@ function bindClickEvents() {
 
     if (target.dataset.providerId) return selectProvider(target.dataset.providerId);
     if (target.dataset.selectModel) return selectModel(target.dataset.selectModel);
+    if (target.dataset.deleteModel) return providerActions.deleteModel(target.dataset.deleteModel);
     if (target.dataset.openProviderSettings) return openProvider(target.dataset.openProviderSettings);
     if (target.dataset.presetId) return providerActions.createFromPreset(target.dataset.presetId);
     if (target.dataset.confirmDeleteProvider) return providerActions.remove(target.dataset.confirmDeleteProvider);
@@ -209,3 +223,7 @@ store.subscribe((state) => {
 bindClickEvents();
 bindFormEvents();
 bootstrap();
+
+api.onConfigChanged(() => {
+  reloadConfig().catch((error) => feedback.showError("配置刷新失败", error));
+});
