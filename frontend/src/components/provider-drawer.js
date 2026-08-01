@@ -4,7 +4,8 @@ import { HEADER_MODES } from "../config/header-presets.js";
 function apiModeOptions(selectedValue) {
   const options = [
     { value: "openai-completions", label: "OpenAI Chat Completions" },
-    { value: "openai-responses", label: "OpenAI Responses" }
+    { value: "openai-responses", label: "OpenAI Responses" },
+    { value: "anthropic-messages", label: "Anthropic Messages" }
   ];
 
   return options

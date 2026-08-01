@@ -7,6 +7,7 @@ export function createAppActions({ root, api, store, feedback }) {
       piSettingsPath: root.querySelector('input[name="piSettingsPath"]').value.trim(),
       piModelsPath: root.querySelector('input[name="piModelsPath"]').value.trim(),
       piSwitchConfigPath: root.querySelector('input[name="piSwitchConfigPath"]').value.trim(),
+      agentDistribution: root.querySelector('select[name="agentDistribution"]')?.value || "pi",
       darkMode: root.querySelector('input[name="darkMode"]')?.checked ?? false,
       workingDir: root.querySelector('input[name="workingDir"]')?.value?.trim() || ""
     };

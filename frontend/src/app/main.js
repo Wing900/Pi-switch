@@ -22,6 +22,7 @@ const store = createStore({
     piSettingsPath: "",
     piModelsPath: "",
     piSwitchConfigPath: "",
+    agentDistribution: "pi",
     darkMode: false
   },
   presets: PRESETS,
@@ -189,6 +190,20 @@ function bindClickEvents() {
   });
 }
 
+function applyDistributionDefaults(target) {
+  const form = target.closest(".settings-form");
+  if (!form) return;
+  const isOmp = target.value === "ohmypi";
+  const setValue = (name, value) => {
+    const input = form.querySelector(`input[name="${name}"]`);
+    if (input) input.value = value;
+  };
+  // 切换发行版时重置命令与路径：后端 Normalize 会自动填入对应发行版的默认路径
+  setValue("piCommand", isOmp ? "omp" : "pi");
+  setValue("piSettingsPath", "");
+  setValue("piModelsPath", "");
+}
+
 function bindFormEvents() {
   root.addEventListener("change", async (event) => {
     const target = event.target;
@@ -199,6 +214,12 @@ function bindFormEvents() {
 
     if (target.closest(".drawer") && target.matches("input[name], select[name]")) {
       providerForm.schedule();
+      return;
+    }
+
+    if (target.closest(".settings-form") && target.matches("select[name='agentDistribution']")) {
+      applyDistributionDefaults(target);
+      await appActions.saveSettings({ closeModal: false });
       return;
     }
 

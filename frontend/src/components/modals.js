@@ -182,6 +182,13 @@ function settingsModal(settings) {
     </label>
   `;
 
+  const distributionOptions = (selected) => [
+    { value: "pi", label: "Pi Agent（官方，~/.pi/agent）" },
+    { value: "ohmypi", label: "Oh My Pi / omp（~/.omp/agent）" }
+  ].map((item) =>
+    `<option value="${item.value}" ${item.value === selected ? "selected" : ""}>${item.label}</option>`
+  ).join("");
+
   const toggleField = (label, name, checked) => `
     <label class="settings-toggle">
       <span class="settings-toggle__copy">
@@ -200,6 +207,10 @@ function settingsModal(settings) {
     body: `
       <div class="settings-form">
         ${toggleField("黑暗模式", "darkMode", !!settings.darkMode)}
+        <label class="form-field">
+          <span class="form-field__label">Agent 发行版</span>
+          <select name="agentDistribution" data-agent-distribution>${distributionOptions(settings.agentDistribution || "pi")}</select>
+        </label>
         ${settingsField("Pi 命令", "piCommand", settings.piCommand)}
         ${settingsField("Pi 设置文件", "piSettingsPath", settings.piSettingsPath)}
         ${settingsField("Pi 模型文件", "piModelsPath", settings.piModelsPath)}

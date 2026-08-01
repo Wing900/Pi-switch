@@ -253,7 +253,7 @@ func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
 		}, nil
 	}
 
-	models, err := provider.FetchOpenAICompatibleModels(current, key)
+	models, err := provider.FetchModelsByAPI(current, key)
 	if err != nil {
 		return provider.ConnectionTestResult{
 			OK:    false,
@@ -261,9 +261,16 @@ func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
 			Lines: []string{
 				"状态：失败",
 				"问题：" + err.Error(),
-				"修复：请检查 Base URL、代理设置和服务端 /models 支持情况",
+				"修复：请检查 Base URL、代理设置、API 密钥和服务端模型列表接口",
 			},
 		}, nil
+	}
+
+	endpoint := "模型列表接口"
+	if current.API == "anthropic-messages" || current.API == "anthropic" {
+		endpoint = "/v1/models"
+	} else {
+		endpoint = "/models"
 	}
 
 	return provider.ConnectionTestResult{
@@ -273,7 +280,7 @@ func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
 			"状态：正常",
 			"Base URL：可访问",
 			envResult.Message,
-			"/models：可用",
+			endpoint + "：可用",
 			"检测到模型：" + provider.FormatModelCount(len(models)),
 		},
 	}, nil
@@ -292,7 +299,7 @@ func (a *App) FetchModels(id string) ([]provider.ModelInfo, error) {
 	if current.APIKeyEnv != "" && !envResult.Found {
 		return nil, errors.New("环境变量 " + current.APIKeyEnv + " 不存在")
 	}
-	return provider.FetchOpenAICompatibleModels(current, key)
+	return provider.FetchModelsByAPI(current, key)
 }
 
 func (a *App) ImportModels(providerID string, models []provider.ModelInfo) error {
@@ -408,6 +415,14 @@ func (a *App) persistPiState(cfg config.SwitchConfig) error {
 	if err := a.service.Save(cfg); err != nil {
 		return err
 	}
+
+	// Oh My Pi 模式：直接写 models.yml，跳过 JSON 与 settings 写入
+	// （omp 无 defaultProvider/defaultModel 键，写未知键会导致 config.yml 校验失败）。
+	if cfg.Settings.AgentDistribution == "ohmypi" {
+		a.markSelfWrite()
+		return pi.WriteAllModelsOMP(cfg.Settings.PiModelsPath, cfg.Providers)
+	}
+
 	a.markSelfWrite()
 	if err := pi.WriteAllModels(cfg.Settings.PiModelsPath, cfg.Providers); err != nil {
 		return err

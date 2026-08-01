@@ -1,5 +1,21 @@
 const PRESET_LIST = [
   {
+    id: "anthropic",
+    label: "Anthropic",
+    name: "Anthropic",
+    baseUrl: "https://api.anthropic.com",
+    apiKeyEnv: "ANTHROPIC_API_KEY",
+    apiKeyLiteral: "",
+    api: "anthropic-messages",
+    type: "anthropic",
+    host: "api.anthropic.com",
+    models: [
+      { id: "claude-opus-4-6", name: "Claude Opus 4.6", reasoning: true, contextWindow: 1000000, maxTokens: 128000 },
+      { id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5", reasoning: true, contextWindow: 1000000, maxTokens: 128000 },
+      { id: "claude-haiku-4-5", name: "Claude Haiku 4.5", reasoning: false, contextWindow: 200000, maxTokens: 64000 }
+    ]
+  },
+  {
     id: "deepseek",
     label: "DeepSeek",
     name: "DeepSeek",

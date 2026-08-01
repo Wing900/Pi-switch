@@ -16,6 +16,21 @@ func Presets() []Config {
 			},
 		},
 		{
+			ID:              "anthropic",
+			Name:            "Anthropic",
+			Type:            "anthropic",
+			BaseURL:         "https://api.anthropic.com",
+			APIKeyEnv:       "ANTHROPIC_API_KEY",
+			API:             "anthropic-messages",
+			Host:            "api.anthropic.com",
+			SelectedModelID: "claude-opus-4-6",
+			Models: []ModelInfo{
+				{ID: "claude-opus-4-6", Name: "Claude Opus 4.6", Reasoning: true, ContextWindow: 1000000, MaxTokens: 128000},
+				{ID: "claude-sonnet-4-5", Name: "Claude Sonnet 4.5", Reasoning: true, ContextWindow: 1000000, MaxTokens: 128000},
+				{ID: "claude-haiku-4-5", Name: "Claude Haiku 4.5", Reasoning: false, ContextWindow: 200000, MaxTokens: 64000},
+			},
+		},
+		{
 			ID:              "openai",
 			Name:            "OpenAI",
 			Type:            "openai-compatible",
