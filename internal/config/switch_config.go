@@ -18,8 +18,9 @@ type AppSettings struct {
 	PiSwitchConfigPath    string `json:"piSwitchConfigPath"`
 	DarkMode              bool   `json:"darkMode"`
 	LastDefaultProviderID string `json:"lastDefaultProviderId,omitempty"`
-	LastDefaultModelID    string `json:"lastDefaultModelId,omitempty"`
-	WorkingDir            string `json:"workingDir"`
+	LastDefaultModelID       string `json:"lastDefaultModelId,omitempty"`
+	WorkingDir               string `json:"workingDir"`
+	LastUpdateCheckAtUnix    int64  `json:"lastUpdateCheckAt,omitempty"`
 }
 
 type SwitchConfig struct {

@@ -487,3 +487,41 @@
   from { transform: translateX(-110%); }
   to { transform: translateX(370%); }
 }
+
+/* 设置页：更新检测 */
+.settings-update {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-subtle);
+  display: grid;
+  gap: 12px;
+}
+
+.settings-update__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.settings-update__version {
+  color: var(--ink);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-update__status {
+  min-height: 18px;
+  color: var(--ink-secondary);
+  font-size: 11px;
+}
+
+/* 更新提示弹窗 */
+.update-notes {
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: var(--ink-secondary);
+  font-size: 11px;
+  line-height: 1.7;
+}

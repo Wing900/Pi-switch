@@ -6,6 +6,10 @@ export function CheckEnvVar(arg1) {
   return window['go']['main']['App']['CheckEnvVar'](arg1);
 }
 
+export function CheckForUpdate() {
+  return window['go']['main']['App']['CheckForUpdate']();
+}
+
 export function CreateProvider(arg1) {
   return window['go']['main']['App']['CreateProvider'](arg1);
 }
@@ -30,12 +34,20 @@ export function ImportModels(arg1, arg2) {
   return window['go']['main']['App']['ImportModels'](arg1, arg2);
 }
 
+export function InstallUpdate() {
+  return window['go']['main']['App']['InstallUpdate']();
+}
+
 export function LaunchPi(arg1, arg2) {
   return window['go']['main']['App']['LaunchPi'](arg1, arg2);
 }
 
 export function ListProviders() {
   return window['go']['main']['App']['ListProviders']();
+}
+
+export function MarkUpdateChecked() {
+  return window['go']['main']['App']['MarkUpdateChecked']();
 }
 
 export function OpenConfigFolder() {

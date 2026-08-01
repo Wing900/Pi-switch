@@ -174,7 +174,8 @@ function headersModal(payload) {
   });
 }
 
-function settingsModal(settings) {
+function settingsModal(state) {
+  const settings = state.settings;
   const settingsField = (label, name, value) => `
     <label class="form-field">
       <span class="form-field__label">${label}</span>
@@ -205,10 +206,32 @@ function settingsModal(settings) {
         ${settingsField("Pi 模型文件", "piModelsPath", settings.piModelsPath)}
         ${settingsField("Pi Switch 配置", "piSwitchConfigPath", settings.piSwitchConfigPath)}
         ${settingsField("工作目录", "workingDir", settings.workingDir || "")}
+        <div class="settings-update">
+          <div class="settings-update__row">
+            <span class="settings-update__version">当前版本 v${escapeHtml(state.version || "")}</span>
+            <button type="button" class="text-button text-button--accent" data-check-update>检查更新</button>
+          </div>
+          <div class="settings-update__status" data-update-status aria-live="polite"></div>
+        </div>
       </div>
     `,
     actions: `
       <button class="text-button" data-close-modal>取消</button>
+    `
+  });
+}
+
+function updateAvailableModal(payload) {
+  return modalFrame({
+    tone: "success",
+    title: "发现新版本",
+    description: `新版本 v${escapeHtml(payload.latestVersion)} 已可用。`,
+    body: `
+      <div class="update-notes">${payload.releaseNotes ? escapeHtml(payload.releaseNotes) : "请前往 Release 页面查看更新说明。"}</div>
+    `,
+    actions: `
+      <button class="text-button" data-skip-update>跳过（7 天内不再提醒）</button>
+      <button class="text-button text-button--accent" data-install-update>立即更新</button>
     `
   });
 }
@@ -225,7 +248,8 @@ export function renderModal(state) {
   if (modal.kind === "fetch-models") return fetchModelsModal(modal.payload);
   if (modal.kind === "manual-model") return manualModelModal(modal.payload);
   if (modal.kind === "provider-headers") return headersModal(modal.payload);
-  if (modal.kind === "settings") return settingsModal(state.settings);
+  if (modal.kind === "settings") return settingsModal(state);
+  if (modal.kind === "update-available") return updateAvailableModal(modal.payload);
 
   if (modal.kind === "add-provider") {
     return modalFrame({

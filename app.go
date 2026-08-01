@@ -17,11 +17,13 @@ import (
 	"piswitch/internal/pi"
 	"piswitch/internal/provider"
 	"piswitch/internal/system"
+	"piswitch/internal/updater"
 )
 
-const appVersion = "0.0.0.11"
+const appVersion = "0.0.0.12"
 
 const configChangedEvent = "pi:config-changed"
+const updateAvailableEvent = "pi:update-available"
 
 type App struct {
 	ctx         context.Context
@@ -40,6 +42,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.service = config.NewService(paths.DefaultPaths())
 	a.startConfigWatcher()
+	a.startBackgroundUpdateCheck()
 }
 
 func (a *App) shutdown(ctx context.Context) {
@@ -388,6 +391,71 @@ func (a *App) UpdateSettings(input config.AppSettings) error {
 	cfg.Settings = config.NormalizeSettings(input)
 	a.markSelfWrite()
 	return a.service.Save(cfg)
+}
+
+// startBackgroundUpdateCheck 在启动时静默检测更新：距上次检查满 7 天才会拉取
+// GitHub，有新版本则向前端广播事件。检测结果（无论有无更新）都会刷新时间戳。
+func (a *App) startBackgroundUpdateCheck() {
+	cfg, err := a.service.Load()
+	if err != nil {
+		return
+	}
+	if !updater.NeedsCheck(cfg.Settings) {
+		return
+	}
+	go func() {
+		res, err := updater.CheckLatest(appVersion)
+		a.recordUpdateCheck()
+		if err != nil || !res.HasUpdate {
+			return
+		}
+		runtime.EventsEmit(a.ctx, updateAvailableEvent, res)
+	}()
+}
+
+// recordUpdateCheck 刷新 LastUpdateCheckAt，作为“跳过则 7 天不检测”的持久化依据。
+func (a *App) recordUpdateCheck() error {
+	cfg, err := a.service.Load()
+	if err != nil {
+		return err
+	}
+	cfg.Settings.LastUpdateCheckAtUnix = time.Now().Unix()
+	a.markSelfWrite()
+	return a.service.Save(cfg)
+}
+
+// CheckForUpdate 手动检查更新（不受 7 天节流限制），并刷新检测时间戳。
+func (a *App) CheckForUpdate() (updater.CheckResult, error) {
+	res, err := updater.CheckLatest(appVersion)
+	_ = a.recordUpdateCheck()
+	return res, err
+}
+
+// MarkUpdateChecked 记录“本次检测已处理（跳过）”，一周内不再静默提醒。
+func (a *App) MarkUpdateChecked() error {
+	return a.recordUpdateCheck()
+}
+
+// InstallUpdate 下载最新 Windows 更新包并写入延迟替换脚本；调用方随后应退出主进程。
+func (a *App) InstallUpdate() error {
+	res, err := updater.CheckLatest(appVersion)
+	if err != nil {
+		return err
+	}
+	if !res.HasUpdate || res.AssetURL == "" {
+		return errors.New("当前已是最新版本，无需更新")
+	}
+	tmp, err := os.CreateTemp("", "PiSwitch-update-*.exe")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	_ = tmp.Close()
+	if err := updater.Download(res.AssetURL, tmpPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	return updater.Install(tmpPath)
 }
 
 func (a *App) ExecuteLaunchPi(providerID string, modelID string) error {

@@ -2,6 +2,7 @@ import { createAppActions } from "../actions/app-actions.js";
 import { createOperationFeedback } from "../actions/operation-feedback.js";
 import { createProviderActions, currentProvider } from "../actions/provider-actions.js";
 import { renderApp, renderContentLayer, renderDrawerLayer } from "../components/app-shell.js";
+import { modelManageList } from "../components/provider-drawer.js";
 import { renderModal } from "../components/modals.js";
 import { PRESETS } from "../config/presets.js";
 import { createProviderFormController } from "../controllers/provider-form-controller.js";
@@ -12,7 +13,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.11",
+  version: "0.0.0.12",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
@@ -157,7 +158,10 @@ const clickActions = {
   "data-launch-pi": appActions.directLaunch,
   "data-window-minimise": () => api.minimiseWindow(),
   "data-window-toggle-maximise": () => api.toggleMaximiseWindow(),
-  "data-window-close": () => api.closeWindow()
+  "data-window-close": () => api.closeWindow(),
+  "data-check-update": appActions.checkUpdate,
+  "data-skip-update": appActions.skipUpdate,
+  "data-install-update": appActions.installUpdate
 };
 
 function findActionAttribute(target) {
@@ -241,8 +245,22 @@ function drawerContentChanged(previous, next) {
     || previousProvider?.baseUrl !== nextProvider?.baseUrl
     || previousProvider?.api !== nextProvider?.api
     || previousProvider?.apiKeyLiteral !== nextProvider?.apiKeyLiteral
-    || previousProvider?.apiKeyEnv !== nextProvider?.apiKeyEnv
-    || previousProvider?.models !== nextProvider?.models;
+    || previousProvider?.apiKeyEnv !== nextProvider?.apiKeyEnv;
+}
+
+function modelManageChanged(previous, next) {
+  const previousProvider = currentProviderSnapshot(previous);
+  const nextProvider = currentProviderSnapshot(next);
+  return previousProvider?.models !== nextProvider?.models;
+}
+
+function updateModelManageLayer(drawerLayer, provider) {
+  const current = drawerLayer.querySelector(".model-manage");
+  if (!current || !provider) return;
+  const holder = document.createElement("div");
+  holder.innerHTML = modelManageList(provider);
+  const next = holder.firstElementChild;
+  if (next) current.replaceWith(next);
 }
 
 function contentChanged(previous, next) {
@@ -272,7 +290,11 @@ function renderState(state) {
     root.innerHTML = renderApp(state);
   } else {
     if (contentChanged(renderedState, state)) contentLayer.innerHTML = renderContentLayer(state);
-    if (drawerContentChanged(renderedState, state)) drawerLayer.innerHTML = renderDrawerLayer(state);
+    if (drawerContentChanged(renderedState, state)) {
+      drawerLayer.innerHTML = renderDrawerLayer(state);
+    } else if (modelManageChanged(renderedState, state)) {
+      updateModelManageLayer(drawerLayer, currentProviderSnapshot(state));
+    }
     if (modalChanged) modalLayer.innerHTML = renderModal(state);
   }
 
@@ -289,4 +311,11 @@ bootstrap();
 
 api.onConfigChanged(() => {
   reloadConfig().catch((error) => feedback.showError("配置刷新失败", error));
+});
+
+api.onUpdateAvailable((result) => {
+  store.setState((state) => ({
+    ...state,
+    modal: { kind: "update-available", payload: result }
+  }));
 });

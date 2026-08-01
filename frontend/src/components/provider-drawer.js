@@ -25,7 +25,7 @@ function field({ label, name, value, type = "text" }) {
   `;
 }
 
-function modelManageList(provider) {
+export function modelManageList(provider) {
   const models = provider.models ?? [];
   if (!models.length) {
     return `

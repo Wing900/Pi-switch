@@ -9,6 +9,7 @@ export namespace config {
 	    lastDefaultProviderId?: string;
 	    lastDefaultModelId?: string;
 	    workingDir: string;
+	    lastUpdateCheckAt?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppSettings(source);
@@ -24,6 +25,7 @@ export namespace config {
 	        this.lastDefaultProviderId = source["lastDefaultProviderId"];
 	        this.lastDefaultModelId = source["lastDefaultModelId"];
 	        this.workingDir = source["workingDir"];
+	        this.lastUpdateCheckAt = source["lastUpdateCheckAt"];
 	    }
 	}
 	export class AppState {
@@ -207,3 +209,31 @@ export namespace system {
 	}
 
 }
+
+export namespace updater {
+	
+	export class CheckResult {
+	    currentVersion: string;
+	    latestVersion: string;
+	    hasUpdate: boolean;
+	    releaseUrl: string;
+	    assetUrl: string;
+	    releaseNotes: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CheckResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.hasUpdate = source["hasUpdate"];
+	        this.releaseUrl = source["releaseUrl"];
+	        this.assetUrl = source["assetUrl"];
+	        this.releaseNotes = source["releaseNotes"];
+	    }
+	}
+
+}
+

@@ -69,5 +69,43 @@ export function createAppActions({ root, api, store, feedback }) {
     }
   }
 
-  return { setDefault, directLaunch, saveSettings };
+  async function checkUpdate() {
+    const statusEl = root.querySelector("[data-update-status]");
+    if (statusEl) statusEl.textContent = "正在检查更新…";
+    try {
+      const result = await api.checkForUpdate();
+      if (result.hasUpdate) {
+        store.setState((state) => ({
+          ...state,
+          modal: { kind: "update-available", payload: result }
+        }));
+      } else if (statusEl) {
+        statusEl.textContent = `已是最新版本（v${result.currentVersion}）。`;
+      }
+    } catch (error) {
+      if (statusEl) statusEl.textContent = "检查更新失败。";
+      feedback.showError("检查更新失败", error);
+    }
+  }
+
+  async function skipUpdate() {
+    try {
+      await api.markUpdateChecked();
+    } catch (error) {
+      feedback.showError("记录跳过失败", error);
+    }
+    store.setState((state) => ({ ...state, modal: null }));
+  }
+
+  async function installUpdate() {
+    feedback.showLoading("正在更新", "下载并准备安装新版本…");
+    try {
+      await api.installUpdate();
+      api.closeWindow();
+    } catch (error) {
+      feedback.showError("更新失败", error);
+    }
+  }
+
+  return { setDefault, directLaunch, saveSettings, checkUpdate, skipUpdate, installUpdate };
 }
