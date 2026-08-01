@@ -1,4 +1,5 @@
 import { createProviderFromPreset } from "../config/presets.js";
+import { customHeadersForProvider, headersForMode } from "../config/header-presets.js";
 import { withTimeout } from "../utils/async.js";
 
 const FETCH_MODELS_TIMEOUT_MS = 10_000;
@@ -45,6 +46,89 @@ function mergeModels(existing, incoming) {
 }
 
 export function createProviderActions({ root, api, store, providerForm, feedback }) {
+  let headerSaveTimer = null;
+
+  function refreshHeaderModeUI(mode) {
+    root.querySelectorAll("[data-set-header-mode]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.setHeaderMode === mode);
+    });
+    const editButton = root.querySelector("[data-open-headers-editor]");
+    editButton?.classList.toggle("is-hidden", mode !== "custom");
+  }
+
+  async function persistProvider(nextProvider) {
+    await api.updateProvider(nextProvider.id, nextProvider);
+    store.setState((state) => ({
+      ...state,
+      providers: state.providers.map((item) => (item.id === nextProvider.id ? nextProvider : item)),
+      drawer: { kind: "provider", providerId: nextProvider.id }
+    }), { notify: false });
+    refreshHeaderModeUI(nextProvider.headerMode);
+  }
+
+  async function setHeaderMode(mode) {
+    if (!(await providerForm.commit())) return;
+    const provider = currentProvider(store.getState());
+    if (!provider) return;
+    const headers = headersForMode(mode, provider.api, customHeadersForProvider(provider));
+    try {
+      await persistProvider({ ...provider, headerMode: mode, headers });
+      if (mode === "custom") {
+        store.setState((state) => ({
+          ...state,
+          modal: { kind: "provider-headers", payload: { providerId: provider.id, headers } }
+        }));
+      }
+    } catch (error) {
+      feedback.showError("保存请求头失败", error);
+    }
+  }
+
+  async function openHeadersEditor() {
+    if (!(await providerForm.commit())) return;
+    const provider = currentProvider(store.getState());
+    if (!provider) return;
+    store.setState((state) => ({
+      ...state,
+      modal: { kind: "provider-headers", payload: { providerId: provider.id, headers: customHeadersForProvider(provider) } }
+    }));
+  }
+
+  function scheduleProviderHeadersSave() {
+    if (headerSaveTimer) window.clearTimeout(headerSaveTimer);
+    headerSaveTimer = window.setTimeout(() => {
+      headerSaveTimer = null;
+      void saveProviderHeaders();
+    }, 500);
+  }
+
+  async function saveProviderHeaders() {
+    const modal = store.getState().modal;
+    if (!modal || modal.kind !== "provider-headers") return;
+    const names = Array.from(root.querySelectorAll("[data-header-name]"));
+    const values = Array.from(root.querySelectorAll("[data-header-value]"));
+    const headers = {};
+    for (let index = 0; index < names.length; index += 1) {
+      const name = names[index]?.value.trim();
+      const value = values[index]?.value ?? "";
+      if (!name && !value.trim()) continue;
+      if (!name || !value.trim()) continue;
+      headers[name] = value;
+    }
+    const provider = store.getState().providers.find((item) => item.id === modal.payload.providerId);
+    if (!provider) return;
+    if (Object.keys(headers).length === 0
+      && Object.keys(provider.headers ?? {}).length === 0
+      && Object.keys(provider.customHeaders ?? {}).length === 0) {
+      return;
+    }
+    try {
+      await persistProvider({ ...provider, headerMode: "custom", headers, customHeaders: headers });
+    } catch (error) {
+      feedback.showError("保存请求头失败", error);
+    }
+  }
+
   async function createFromPreset(presetId) {
     const nextProvider = createProviderFromPreset(presetId);
     const exists = store.getState().providers.some((provider) => provider.id === nextProvider.id);
@@ -263,6 +347,9 @@ export function createProviderActions({ root, api, store, providerForm, feedback
     importManualModel,
     toggleAllModelSelections,
     deleteModel,
+    setHeaderMode,
+    openHeadersEditor,
+    scheduleProviderHeadersSave,
     syncToggleAllButton: () => syncToggleAllButton(root)
   };
 }

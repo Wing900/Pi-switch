@@ -19,7 +19,7 @@ function providerFromForm(root, provider) {
     baseUrl: readField(root, "baseUrl", provider.baseUrl),
     api: readField(root, "api", provider.api),
     apiKeyLiteral: readField(root, "apiKeyLiteral", provider.apiKeyLiteral),
-    apiKeyEnv: ""
+    apiKeyEnv: provider.apiKeyEnv
   };
 }
 
@@ -67,6 +67,10 @@ export function createProviderFormController({ root, api, store, getCurrentProvi
         showInvalidModal(validationMessage);
       }
       return Promise.resolve(false);
+    }
+
+    if (JSON.stringify(nextProvider) === JSON.stringify(provider)) {
+      return Promise.resolve(true);
     }
 
     const currentRevision = ++revision;

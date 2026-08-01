@@ -8,6 +8,7 @@ const PRESET_LIST = [
     apiKeyLiteral: "",
     api: "openai-completions",
     type: "openai-compatible",
+    headerMode: "none",
     host: "api.deepseek.com",
     models: [
       { id: "Deepseek-v4-pro", name: "Deepseek-v4-pro", reasoning: false }
@@ -22,6 +23,7 @@ const PRESET_LIST = [
     apiKeyLiteral: "",
     api: "openai-completions",
     type: "openai-compatible",
+    headerMode: "none",
     host: "api.openai.com",
     models: [
       { id: "GPT-5.5", name: "GPT-5.5", reasoning: false }
@@ -42,7 +44,9 @@ export function createProviderFromPreset(presetId) {
     apiKeyLiteral: preset.apiKeyLiteral,
     api: preset.api,
     proxy: "",
+    headerMode: "none",
     headers: {},
+    customHeaders: {},
     models: preset.models.map((model) => ({ ...model })),
     host: preset.host,
     selectedModelId: preset.models[0]?.id ?? "",

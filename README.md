@@ -21,6 +21,10 @@ Pi Switch 是一个跨平台的 Pi Agent 模型服务商配置工具，基于 Wa
 - [Pi](https://github.com/earendil-works/pi) - Pi 项目
 - [Linux.do](https://linux.do) - 社区支持
 
+## 参考项目
+
+- [pi-model-manager](https://github.com/Qihuanxishini/pi-model-manager) - Provider 配置与自定义请求头实现参考
+
 ## 开发
 
 待完善中

@@ -121,7 +121,9 @@ export namespace provider {
 	    apiKeyLiteral: string;
 	    api: string;
 	    proxy: string;
+	    headerMode: string;
 	    headers: Record<string, string>;
+	    customHeaders?: Record<string, string>;
 	    models: ModelInfo[];
 	    host: string;
 	    selectedModelId: string;
@@ -140,7 +142,9 @@ export namespace provider {
 	        this.apiKeyLiteral = source["apiKeyLiteral"];
 	        this.api = source["api"];
 	        this.proxy = source["proxy"];
+	        this.headerMode = source["headerMode"];
 	        this.headers = source["headers"];
+	        this.customHeaders = source["customHeaders"];
 	        this.models = this.convertValues(source["models"], ModelInfo);
 	        this.host = source["host"];
 	        this.selectedModelId = source["selectedModelId"];

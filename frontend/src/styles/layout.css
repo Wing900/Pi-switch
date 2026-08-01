@@ -5,6 +5,12 @@
   background: transparent;
 }
 
+[data-content-layer],
+[data-drawer-layer],
+[data-modal-layer] {
+  display: contents;
+}
+
 .window-shell {
   position: relative;
   display: flex;

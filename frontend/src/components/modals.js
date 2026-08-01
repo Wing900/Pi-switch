@@ -151,6 +151,29 @@ function manualModelModal(payload) {
   });
 }
 
+function headersModal(payload) {
+  const headers = Object.entries(payload.headers ?? {});
+  const rows = headers.length > 0 ? headers : [["", ""]];
+  return modalFrame({
+    wide: true,
+    title: "自定义请求头",
+    body: `
+      <div class="headers-editor">
+        <div class="headers-editor__head"><span>Header 名称</span><span>Header 值</span></div>
+        <div class="headers-editor__rows">
+          ${rows.map(([name, value]) => `
+            <div class="headers-editor__row">
+              <input class="headers-editor__input" data-header-name value="${escapeHtml(name)}" placeholder="user-agent" autocomplete="off">
+              <input class="headers-editor__input" data-header-value value="${escapeHtml(value)}" placeholder="custom-client/1.0" autocomplete="off">
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `,
+    actions: '<span class="headers-editor__autosave">修改后自动保存</span><button class="text-button" data-close-modal>关闭</button>'
+  });
+}
+
 function settingsModal(settings) {
   const settingsField = (label, name, value) => `
     <label class="form-field">
@@ -201,6 +224,7 @@ export function renderModal(state) {
   if (modal.kind === "provider-invalid") return providerInvalidModal(modal.payload);
   if (modal.kind === "fetch-models") return fetchModelsModal(modal.payload);
   if (modal.kind === "manual-model") return manualModelModal(modal.payload);
+  if (modal.kind === "provider-headers") return headersModal(modal.payload);
   if (modal.kind === "settings") return settingsModal(state.settings);
 
   if (modal.kind === "add-provider") {

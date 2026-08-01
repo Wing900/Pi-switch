@@ -1,4 +1,5 @@
 import { escapeHtml } from "./view-utils.js";
+import { HEADER_MODES } from "../config/header-presets.js";
 
 function apiModeOptions(selectedValue) {
   const options = [
@@ -54,6 +55,28 @@ function modelManageList(provider) {
   `;
 }
 
+function headerModeSection(provider) {
+  const savedMode = provider.headerMode === "auto" ? "none" : provider.headerMode;
+  const activeMode = savedMode || (Object.keys(provider.headers ?? {}).length ? "custom" : "none");
+  return `
+    <section class="form-section header-mode-section">
+      <span class="form-field__label">请求头身份</span>
+      <div class="header-mode-grid">
+        ${HEADER_MODES.map((mode) => `
+          <button
+            class="header-mode-button ${mode.id === activeMode ? "is-active" : ""}"
+            type="button"
+            data-set-header-mode="${mode.id}"
+          >${escapeHtml(mode.label)}</button>
+        `).join("")}
+      </div>
+      <div class="header-mode-summary">
+        <button class="header-mode-edit ${activeMode === "custom" ? "" : "is-hidden"}" type="button" data-open-headers-editor>编辑自定义 Header</button>
+      </div>
+    </section>
+  `;
+}
+
 export function renderProviderDrawer(state, provider) {
   if (!state.drawer || state.drawer.kind !== "provider" || !provider) {
     return "";
@@ -81,6 +104,7 @@ export function renderProviderDrawer(state, provider) {
           ${field({ label: "Provider ID", name: "id", value: provider.id })}
         </section>
 
+        ${headerModeSection(provider)}
         ${modelManageList(provider)}
       </div>
 

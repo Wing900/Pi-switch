@@ -6,7 +6,6 @@
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   cursor: default;
-  animation: drawerScrimIn 220ms ease both;
 }
 
 .drawer {
@@ -21,7 +20,6 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   box-shadow: var(--shadow-drawer);
-  animation: drawerEnter 260ms var(--ease-out) both;
 }
 
 @keyframes drawerScrimIn {
@@ -127,6 +125,60 @@
 
 .model-manage {
   margin-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--line-subtle) 55%, transparent);
+}
+
+.header-mode-section {
+  padding-top: 10px;
+}
+
+.header-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.header-mode-button {
+  min-height: 30px;
+  padding: 6px 7px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.header-mode-button:hover,
+.header-mode-button.is-active {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--ink);
+}
+
+.header-mode-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 9px;
+  color: var(--ink-muted);
+  font-size: 10px;
+}
+
+.header-mode-edit {
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+}
+
+.header-mode-edit.is-hidden {
+  display: none;
 }
 
 .model-manage__empty {
@@ -139,7 +191,6 @@
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
   max-height: 220px;
   overflow-y: auto;
 }
@@ -148,10 +199,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
-  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
-  border-radius: 6px;
-  background: var(--surface-soft, rgba(0, 0, 0, 0.02));
+  padding: 9px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line-subtle) 55%, transparent);
 }
 
 .model-manage__name {

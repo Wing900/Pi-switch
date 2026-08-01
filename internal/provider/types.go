@@ -16,7 +16,9 @@ type Config struct {
 	APIKeyLiteral   string                     `json:"apiKeyLiteral"`
 	API             string                     `json:"api"`
 	Proxy           string                     `json:"proxy"`
+	HeaderMode      string                     `json:"headerMode"`
 	Headers         map[string]string          `json:"headers"`
+	CustomHeaders   map[string]string          `json:"customHeaders,omitempty"`
 	Models          []ModelInfo                `json:"models"`
 	Host            string                     `json:"host"`
 	SelectedModelID string                     `json:"selectedModelId"`
@@ -25,7 +27,7 @@ type Config struct {
 
 var configFields = map[string]struct{}{
 	"id": {}, "name": {}, "type": {}, "baseUrl": {}, "apiKeyEnv": {},
-	"apiKeyLiteral": {}, "api": {}, "proxy": {}, "headers": {},
+	"apiKeyLiteral": {}, "api": {}, "proxy": {}, "headerMode": {}, "headers": {}, "customHeaders": {},
 	"models": {}, "host": {}, "selectedModelId": {},
 }
 
@@ -87,12 +89,23 @@ func Normalize(input Config) Config {
 	input.APIKeyEnv = strings.TrimSpace(input.APIKeyEnv)
 	input.APIKeyLiteral = strings.TrimSpace(input.APIKeyLiteral)
 	input.API = strings.TrimSpace(input.API)
+	input.HeaderMode = strings.TrimSpace(input.HeaderMode)
 	input.Models = NormalizeModels(input.Models)
 	if input.Type == "" {
 		input.Type = "openai-compatible"
 	}
 	if input.Headers == nil {
 		input.Headers = map[string]string{}
+	}
+	if input.CustomHeaders == nil {
+		input.CustomHeaders = map[string]string{}
+	}
+	if input.HeaderMode == "auto" {
+		input.HeaderMode = "none"
+		input.Headers = map[string]string{}
+	}
+	if input.HeaderMode == "" {
+		input.HeaderMode = "none"
 	}
 	if input.Host == "" {
 		input.Host = deriveHost(input.BaseURL)

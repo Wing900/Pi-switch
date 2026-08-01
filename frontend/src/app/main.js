@@ -1,7 +1,8 @@
 import { createAppActions } from "../actions/app-actions.js";
 import { createOperationFeedback } from "../actions/operation-feedback.js";
 import { createProviderActions, currentProvider } from "../actions/provider-actions.js";
-import { renderApp } from "../components/app-shell.js";
+import { renderApp, renderContentLayer, renderDrawerLayer } from "../components/app-shell.js";
+import { renderModal } from "../components/modals.js";
 import { PRESETS } from "../config/presets.js";
 import { createProviderFormController } from "../controllers/provider-form-controller.js";
 import { WailsApi } from "../services/wails-api.js";
@@ -11,7 +12,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.10",
+  version: "0.0.0.11",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
@@ -146,6 +147,7 @@ const clickActions = {
   "data-close-modal": closeModal,
   "data-close-drawer": closeDrawer,
   "data-fetch-models": providerActions.fetchModels,
+  "data-open-headers-editor": providerActions.openHeadersEditor,
   "data-import-models": providerActions.importModels,
   "data-toggle-model-selection-all": providerActions.toggleAllModelSelections,
   "data-open-manual-model": providerActions.openManualModel,
@@ -177,6 +179,7 @@ function bindClickEvents() {
     if (target.dataset.providerId) return selectProvider(target.dataset.providerId);
     if (target.dataset.selectModel) return selectModel(target.dataset.selectModel);
     if (target.dataset.deleteModel) return providerActions.deleteModel(target.dataset.deleteModel);
+    if (target.dataset.setHeaderMode) return providerActions.setHeaderMode(target.dataset.setHeaderMode);
     if (target.dataset.openProviderSettings) return openProvider(target.dataset.openProviderSettings);
     if (target.dataset.presetId) return providerActions.createFromPreset(target.dataset.presetId);
     if (target.dataset.confirmDeleteProvider) return providerActions.remove(target.dataset.confirmDeleteProvider);
@@ -211,14 +214,74 @@ function bindFormEvents() {
     if (event.target.closest(".drawer") && event.target.matches("input[name]")) {
       providerForm.schedule();
     }
+    if (event.target.closest(".headers-editor") && event.target.matches("[data-header-name], [data-header-value]")) {
+      providerActions.scheduleProviderHeadersSave();
+    }
   });
 }
 
-store.subscribe((state) => {
+let renderedState = null;
+
+function sameDrawer(previous, next) {
+  return previous?.drawer?.kind === next.drawer?.kind
+    && previous?.drawer?.providerId === next.drawer?.providerId
+    && previous?.selectedProviderId === next.selectedProviderId;
+}
+
+function currentProviderSnapshot(state) {
+  return state.providers.find((provider) => provider.id === state.selectedProviderId) ?? state.providers[0];
+}
+
+function drawerContentChanged(previous, next) {
+  if (!sameDrawer(previous, next)) return true;
+  const previousProvider = currentProviderSnapshot(previous);
+  const nextProvider = currentProviderSnapshot(next);
+  return previousProvider?.id !== nextProvider?.id
+    || previousProvider?.name !== nextProvider?.name
+    || previousProvider?.baseUrl !== nextProvider?.baseUrl
+    || previousProvider?.api !== nextProvider?.api
+    || previousProvider?.apiKeyLiteral !== nextProvider?.apiKeyLiteral
+    || previousProvider?.apiKeyEnv !== nextProvider?.apiKeyEnv
+    || previousProvider?.models !== nextProvider?.models;
+}
+
+function contentChanged(previous, next) {
+  return previous.selectedProviderId !== next.selectedProviderId
+    || previous.defaultProviderId !== next.defaultProviderId
+    || previous.defaultModelId !== next.defaultModelId
+    || previous.modelMenuOpen !== next.modelMenuOpen
+    || previous.settings !== next.settings
+    || previous.providers !== next.providers;
+}
+
+function renderState(state) {
+  if (!renderedState) {
+    root.innerHTML = renderApp(state);
+    renderedState = state;
+    applyDocumentTheme(state.settings);
+    document.title = `Pi Switch ${state.version}`;
+    return;
+  }
+
+  const modalChanged = renderedState.modal !== state.modal
+    || (state.modal?.kind === "settings" && renderedState.settings !== state.settings);
+  const contentLayer = root.querySelector("[data-content-layer]");
+  const drawerLayer = root.querySelector("[data-drawer-layer]");
+  const modalLayer = root.querySelector("[data-modal-layer]");
+  if (!contentLayer || !drawerLayer || !modalLayer) {
+    root.innerHTML = renderApp(state);
+  } else {
+    if (contentChanged(renderedState, state)) contentLayer.innerHTML = renderContentLayer(state);
+    if (drawerContentChanged(renderedState, state)) drawerLayer.innerHTML = renderDrawerLayer(state);
+    if (modalChanged) modalLayer.innerHTML = renderModal(state);
+  }
+
+  renderedState = state;
   applyDocumentTheme(state.settings);
-  root.innerHTML = renderApp(state);
   document.title = `Pi Switch ${state.version}`;
-});
+}
+
+store.subscribe(renderState);
 
 bindClickEvents();
 bindFormEvents();

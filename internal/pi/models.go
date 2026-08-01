@@ -13,6 +13,7 @@ type providerPayload struct {
 	BaseURL string               `json:"baseUrl"`
 	API     string               `json:"api"`
 	APIKey  string               `json:"apiKey"`
+	Headers map[string]string    `json:"headers,omitempty"`
 	Models  []provider.ModelInfo `json:"models"`
 }
 
@@ -43,6 +44,7 @@ func WriteAllModels(path string, providersConfig []provider.Config) error {
 			BaseURL: cfg.BaseURL,
 			API:     cfg.API,
 			APIKey:  key,
+			Headers: cfg.Headers,
 			Models:  cfg.Models,
 		}
 		encodedProvider, err := json.Marshal(nextProvider)

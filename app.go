@@ -19,7 +19,7 @@ import (
 	"piswitch/internal/system"
 )
 
-const appVersion = "0.0.0.10"
+const appVersion = "0.0.0.11"
 
 const configChangedEvent = "pi:config-changed"
 
