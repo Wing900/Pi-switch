@@ -416,13 +416,6 @@ func (a *App) persistPiState(cfg config.SwitchConfig) error {
 		return err
 	}
 
-	// Oh My Pi 模式：直接写 models.yml，跳过 JSON 与 settings 写入
-	// （omp 无 defaultProvider/defaultModel 键，写未知键会导致 config.yml 校验失败）。
-	if cfg.Settings.AgentDistribution == "ohmypi" {
-		a.markSelfWrite()
-		return pi.WriteAllModelsOMP(cfg.Settings.PiModelsPath, cfg.Providers)
-	}
-
 	a.markSelfWrite()
 	if err := pi.WriteAllModels(cfg.Settings.PiModelsPath, cfg.Providers); err != nil {
 		return err

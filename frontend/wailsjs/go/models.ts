@@ -5,7 +5,6 @@ export namespace config {
 	    piSettingsPath: string;
 	    piModelsPath: string;
 	    piSwitchConfigPath: string;
-	    agentDistribution?: string;
 	    darkMode: boolean;
 	    lastDefaultProviderId?: string;
 	    lastDefaultModelId?: string;
@@ -21,7 +20,6 @@ export namespace config {
 	        this.piSettingsPath = source["piSettingsPath"];
 	        this.piModelsPath = source["piModelsPath"];
 	        this.piSwitchConfigPath = source["piSwitchConfigPath"];
-	        this.agentDistribution = source["agentDistribution"];
 	        this.darkMode = source["darkMode"];
 	        this.lastDefaultProviderId = source["lastDefaultProviderId"];
 	        this.lastDefaultModelId = source["lastDefaultModelId"];
@@ -209,4 +207,3 @@ export namespace system {
 	}
 
 }
-

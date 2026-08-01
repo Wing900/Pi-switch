@@ -30,7 +30,6 @@ Pi Switch 是一个跨平台的 Pi Agent 模型服务商配置工具，基于 Wa
 - 多 Provider 管理（预设：DeepSeek / OpenAI / Anthropic），支持任意 OpenAI 兼容服务
 - Anthropic 原生 API 适配：`anthropic-messages` 模式，通过 `/v1/models` + `x-api-key` 拉取模型
 - 模型列表拉取 / 手动导入 / 一键启动 Pi Agent
-- **Oh My Pi（omp）适配**：设置中切换「Agent 发行版」到 ohmypi 后，直接写入 `~/.omp/agent/models.yml`（YAML 格式，apiKey 按 omp 语义写环境变量名）；不再写 JSON，避免 omp 迁移一次后新增写入失效
 
 ## 开发
 

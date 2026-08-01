@@ -16,7 +16,6 @@ type AppSettings struct {
 	PiSettingsPath        string `json:"piSettingsPath"`
 	PiModelsPath          string `json:"piModelsPath"`
 	PiSwitchConfigPath    string `json:"piSwitchConfigPath"`
-	AgentDistribution     string `json:"agentDistribution,omitempty"`
 	DarkMode              bool   `json:"darkMode"`
 	LastDefaultProviderID string `json:"lastDefaultProviderId,omitempty"`
 	LastDefaultModelID    string `json:"lastDefaultModelId,omitempty"`
@@ -165,48 +164,20 @@ func defaultConfig(appPaths paths.AppPaths) SwitchConfig {
 
 func NormalizeSettings(input AppSettings) AppSettings {
 	defaultPaths := paths.DefaultPaths()
-	home, err := os.UserHomeDir()
-	if err != nil {
-		home = ""
-	}
-	if input.AgentDistribution == "" {
-		input.AgentDistribution = "pi"
-	}
-	ompSettingsPath := ""
-	ompModelsPath := ""
-	if home != "" {
-		ompSettingsPath = filepath.Join(home, ".omp", "agent", "config.yml")
-		ompModelsPath = filepath.Join(home, ".omp", "agent", "models.yml")
-	}
-	isOhMyPi := input.AgentDistribution == "ohmypi"
 	if input.PiCommand == "" {
-		if isOhMyPi {
-			input.PiCommand = "omp"
-		} else {
-			input.PiCommand = "pi"
-		}
+		input.PiCommand = "pi"
 	}
 	if input.PiSettingsPath == "" {
-		if isOhMyPi {
-			input.PiSettingsPath = ompSettingsPath
-		} else {
-			input.PiSettingsPath = defaultPaths.PiSettingsPath
-		}
+		input.PiSettingsPath = defaultPaths.PiSettingsPath
 	}
 	if input.PiModelsPath == "" {
-		if isOhMyPi {
-			input.PiModelsPath = ompModelsPath
-		} else {
-			input.PiModelsPath = defaultPaths.PiModelsPath
-		}
+		input.PiModelsPath = defaultPaths.PiModelsPath
 	}
 	if input.PiSwitchConfigPath == "" {
 		input.PiSwitchConfigPath = defaultPaths.PiSwitchConfigPath
 	}
 	if input.WorkingDir == "" {
-		if home == "" {
-			home, err = os.UserHomeDir()
-		}
+		home, err := os.UserHomeDir()
 		if err == nil {
 			input.WorkingDir = home
 		}
