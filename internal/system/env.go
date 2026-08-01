@@ -32,7 +32,12 @@ func ResolveAPIKey(envName, literal string) (string, EnvCheckResult) {
 			result.Message = "环境变量：" + envName
 			return value, result
 		}
-		result.Message = "环境变量：" + envName + " 未找到"
+		if literal != "" {
+			result.Message = "环境变量：" + envName + " 未设置，使用本地密钥"
+			result.Found = true
+			return literal, result
+		}
+		result.Message = "环境变量：" + envName + " 未设置"
 		return "", result
 	}
 	return literal, EnvCheckResult{
