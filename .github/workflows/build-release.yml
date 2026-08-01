@@ -150,3 +150,15 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: publish/*
+          name: Pi Switch ${{ github.ref_name }}
+          body: |
+            ## 本次更新
+
+            - 支持自定义请求头身份：Codex、Claude Code、Grok Build。
+            - 支持自定义 Header 配置，并自动保存。
+            - 优化 Provider 抽屉和模型管理界面，减少重绘闪烁。
+            - 增加 `pi-model-manager` 参考项目说明。
+
+            ## 下载
+
+            根据系统选择对应安装包：Windows、macOS 或 Linux。
