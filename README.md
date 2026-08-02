@@ -42,6 +42,7 @@ Linux 版本依赖 GTK3 和 WebKitGTK。发布页同时提供两种 WebKitGTK AB
 | 系统 | ABI | 发布文件后缀 | 运行依赖 |
 | --- | --- | --- | --- |
 | Debian 12/13+、Ubuntu 22.04+ | 4.1 | `linux-amd64-webkit2-41` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0` |
-| Debian 11、Ubuntu 20.04 | 4.0 | `linux-amd64-webkit2-40` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37` |
+| 已安装 WebKitGTK 4.0 的 Linux 环境 | 4.0 | `linux-amd64-webkit2-40` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37` |
 
 例如 Debian 13 请选择 `PiSwitch-<version>-linux-amd64-webkit2-41.tar.gz`。
+4.0 构建基于 Ubuntu 22.04，旧发行版还需满足对应的 `glibc` 运行时版本要求。
