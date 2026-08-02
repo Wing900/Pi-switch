@@ -91,7 +91,19 @@ jobs:
           path: release/
 
   build-linux:
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: webkit2-41
+            runner: ubuntu-24.04
+            webkit_tag: webkit2_41
+            webkit_dev_package: libwebkit2gtk-4.1-dev
+          - id: webkit2-40
+            runner: ubuntu-22.04
+            webkit_tag: webkit2_40
+            webkit_dev_package: libwebkit2gtk-4.0-dev
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -104,7 +116,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev ${{ matrix.webkit_dev_package }}
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
@@ -115,19 +127,19 @@ jobs:
           npm install
           npm run build
           cd ..
-          wails build -platform linux/amd64
+          wails build -platform linux/amd64 -tags ${{ matrix.webkit_tag }}
 
       - name: Prepare release assets
         run: |
           mkdir -p release
-          mv build/bin/PiSwitch release/PiSwitch-${{ github.ref_name }}-linux-amd64
+          mv build/bin/PiSwitch release/PiSwitch-${{ github.ref_name }}-linux-amd64-${{ matrix.id }}
           cd release
-          tar -czf PiSwitch-${{ github.ref_name }}-linux-amd64.tar.gz PiSwitch-${{ github.ref_name }}-linux-amd64
-          rm PiSwitch-${{ github.ref_name }}-linux-amd64
+          tar -czf PiSwitch-${{ github.ref_name }}-linux-amd64-${{ matrix.id }}.tar.gz PiSwitch-${{ github.ref_name }}-linux-amd64-${{ matrix.id }}
+          rm PiSwitch-${{ github.ref_name }}-linux-amd64-${{ matrix.id }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-amd64
+          name: linux-amd64-${{ matrix.id }}
           path: release/
 
   publish:
@@ -158,6 +170,7 @@ jobs:
             - 支持自定义 Header 配置，并自动保存。
             - 优化 Provider 抽屉和模型管理界面，减少重绘闪烁。
             - 增加 `pi-model-manager` 参考项目说明。
+            - Linux 同时发布 WebKitGTK 4.1 与 4.0 ABI 构建产物，兼容 Debian 13 等新版系统。
 
             ## 下载
 

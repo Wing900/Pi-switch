@@ -34,3 +34,14 @@ Pi Switch 是一个跨平台的 Pi Agent 模型服务商配置工具，基于 Wa
 ## 开发
 
 待完善中
+
+## Linux 运行依赖
+
+Linux 版本依赖 GTK3 和 WebKitGTK。发布页同时提供两种 WebKitGTK ABI 构建产物，请按系统选择：
+
+| 系统 | ABI | 发布文件后缀 | 运行依赖 |
+| --- | --- | --- | --- |
+| Debian 12/13+、Ubuntu 22.04+ | 4.1 | `linux-amd64-webkit2-41` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0` |
+| Debian 11、Ubuntu 20.04 | 4.0 | `linux-amd64-webkit2-40` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37` |
+
+例如 Debian 13 请选择 `PiSwitch-<version>-linux-amd64-webkit2-41.tar.gz`。
