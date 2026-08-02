@@ -96,7 +96,7 @@ jobs:
       matrix:
         include:
           - id: webkit2-41
-            runner: ubuntu-24.04
+            runner: ubuntu-22.04
             webkit_tag: webkit2_41
             webkit_dev_package: libwebkit2gtk-4.1-dev
           - id: webkit2-40
