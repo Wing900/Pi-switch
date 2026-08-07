@@ -171,7 +171,7 @@ jobs:
             - 默认模型改为意图式 Patch，Provider 自动保存和启动 Pi 不再改写默认设置。
             - 增加并发修改检测、原子写入、自动备份和实时文件同步。
             - 固定 Pi Switch 应用配置路径，修复自定义路径导致的读取分叉。
-            - Linux 同时发布 WebKitGTK 4.1 与 4.0 ABI 构建产物。
+            - Linux 同时发布 WebKitGTK 4.1 与 4.0 ABI 构建产物，兼容 Debian 13 等新版系统。
 
             ## 下载
 
