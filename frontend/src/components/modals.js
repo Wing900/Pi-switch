@@ -204,7 +204,6 @@ function settingsModal(state) {
         ${settingsField("Pi 命令", "piCommand", settings.piCommand)}
         ${settingsField("Pi 设置文件", "piSettingsPath", settings.piSettingsPath)}
         ${settingsField("Pi 模型文件", "piModelsPath", settings.piModelsPath)}
-        ${settingsField("Pi Switch 配置", "piSwitchConfigPath", settings.piSwitchConfigPath)}
         ${settingsField("工作目录", "workingDir", settings.workingDir || "")}
         <div class="settings-update">
           <div class="settings-update__row">

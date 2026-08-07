@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"piswitch/internal/config"
+	"piswitch/internal/configsync"
 	"piswitch/internal/paths"
 	"piswitch/internal/pi"
 	"piswitch/internal/provider"
@@ -20,18 +22,23 @@ import (
 	"piswitch/internal/updater"
 )
 
-const appVersion = "0.0.0.12"
+const appVersion = "0.0.0.14"
 
 const configChangedEvent = "pi:config-changed"
 const updateAvailableEvent = "pi:update-available"
 
 type App struct {
-	ctx         context.Context
-	service     *config.Service
-	watcher     *fsnotify.Watcher
-	watcherStop chan struct{}
-	writeMu     sync.Mutex
-	lastSelfWrite time.Time
+	ctx          context.Context
+	coordinator  *configsync.Coordinator
+	watcher      *fsnotify.Watcher
+	watcherStop  chan struct{}
+	selfWriteMu  sync.Mutex
+	selfWriteMap map[string]selfWriteFingerprint
+}
+
+type selfWriteFingerprint struct {
+	hash       [sha256.Size]byte
+	recordedAt time.Time
 }
 
 func NewApp() *App {
@@ -40,7 +47,8 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.service = config.NewService(paths.DefaultPaths())
+	service := config.NewService(paths.DefaultPaths())
+	a.coordinator = configsync.New(service, a.recordSelfWrite)
 	a.startConfigWatcher()
 	a.startBackgroundUpdateCheck()
 }
@@ -49,30 +57,58 @@ func (a *App) shutdown(ctx context.Context) {
 	a.stopConfigWatcher()
 }
 
-// markSelfWrite 在本应用主动写盘前调用，用于让 watcher 忽略自身触发的变更。
-func (a *App) markSelfWrite() {
-	a.writeMu.Lock()
-	a.lastSelfWrite = time.Now()
-	a.writeMu.Unlock()
-}
-
-func (a *App) recentSelfWrite() bool {
-	a.writeMu.Lock()
-	defer a.writeMu.Unlock()
-	return time.Since(a.lastSelfWrite) < 800*time.Millisecond
-}
-
-func (a *App) startConfigWatcher() {
-	cfg, err := a.service.Load()
+// recordSelfWrite records the actual file content so watcher suppression is
+// scoped to this exact write. A concurrent external change gets a new hash and
+// still reaches the UI.
+func (a *App) recordSelfWrite(path string) {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return
 	}
-	targets := make(map[string]struct{}, 2)
+	a.selfWriteMu.Lock()
+	defer a.selfWriteMu.Unlock()
+	if a.selfWriteMap == nil {
+		a.selfWriteMap = map[string]selfWriteFingerprint{}
+	}
+	a.selfWriteMap[filepath.Clean(path)] = selfWriteFingerprint{
+		hash:       sha256.Sum256(data),
+		recordedAt: time.Now(),
+	}
+}
+
+func (a *App) isSelfWrite(path string) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	cleanPath := filepath.Clean(path)
+	a.selfWriteMu.Lock()
+	defer a.selfWriteMu.Unlock()
+	recorded, ok := a.selfWriteMap[cleanPath]
+	if !ok {
+		return false
+	}
+	if time.Since(recorded.recordedAt) > 3*time.Second {
+		delete(a.selfWriteMap, cleanPath)
+		return false
+	}
+	return recorded.hash == sha256.Sum256(data)
+}
+
+func (a *App) startConfigWatcher() {
+	cfg, err := a.coordinator.Load()
+	if err != nil {
+		return
+	}
+	targets := make(map[string]struct{}, 3)
 	if cfg.Settings.PiSwitchConfigPath != "" {
 		targets[cfg.Settings.PiSwitchConfigPath] = struct{}{}
 	}
 	if cfg.Settings.PiSettingsPath != "" {
 		targets[cfg.Settings.PiSettingsPath] = struct{}{}
+	}
+	if cfg.Settings.PiModelsPath != "" {
+		targets[cfg.Settings.PiModelsPath] = struct{}{}
 	}
 	if len(targets) == 0 {
 		return
@@ -87,28 +123,27 @@ func (a *App) startConfigWatcher() {
 	if err != nil {
 		return
 	}
+	watchedDirs := 0
 	for dir := range dirs {
-		if err := w.Add(dir); err != nil {
-			_ = w.Close()
-			return
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			continue
 		}
+		if err := w.Add(dir); err != nil {
+			continue
+		}
+		watchedDirs++
+	}
+	if watchedDirs == 0 {
+		_ = w.Close()
+		return
 	}
 	a.watcher = w
 	a.watcherStop = make(chan struct{})
 
 	go func() {
 		var debounce *time.Timer
-		pending := false
-		fire := func() {
-			if !pending {
-				return
-			}
-			pending = false
-			if a.recentSelfWrite() {
-				return
-			}
-			runtime.EventsEmit(a.ctx, configChangedEvent)
-		}
+		var debounceC <-chan time.Time
+		pendingPaths := map[string]struct{}{}
 		for {
 			select {
 			case <-a.watcherStop:
@@ -123,14 +158,35 @@ func (a *App) startConfigWatcher() {
 				if _, ok := targets[event.Name]; !ok {
 					continue
 				}
-				if event.Op&fsnotify.Write == 0 && event.Op&fsnotify.Create == 0 {
+				if event.Op&fsnotify.Write == 0 && event.Op&fsnotify.Create == 0 && event.Op&fsnotify.Remove == 0 && event.Op&fsnotify.Rename == 0 {
 					continue
 				}
-				pending = true
-				if debounce != nil {
-					debounce.Stop()
+				pendingPaths[event.Name] = struct{}{}
+				if debounce == nil {
+					debounce = time.NewTimer(300 * time.Millisecond)
+				} else {
+					if !debounce.Stop() {
+						select {
+						case <-debounce.C:
+						default:
+						}
+					}
+					debounce.Reset(300 * time.Millisecond)
 				}
-				debounce = time.AfterFunc(300*time.Millisecond, fire)
+				debounceC = debounce.C
+			case <-debounceC:
+				shouldReload := false
+				for path := range pendingPaths {
+					if !a.isSelfWrite(path) {
+						shouldReload = true
+						break
+					}
+				}
+				pendingPaths = map[string]struct{}{}
+				debounceC = nil
+				if shouldReload {
+					runtime.EventsEmit(a.ctx, configChangedEvent)
+				}
 			case err, ok := <-w.Errors:
 				if !ok {
 					return
@@ -153,11 +209,14 @@ func (a *App) stopConfigWatcher() {
 }
 
 func (a *App) GetAppState() (config.AppState, error) {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return config.AppState{}, err
 	}
-	piDefaults, _ := pi.ReadDefaults(cfg.Settings.PiSettingsPath)
+	piDefaults, err := pi.ReadDefaults(cfg.Settings.PiSettingsPath)
+	if err != nil {
+		return config.AppState{}, err
+	}
 	selectedProvider := ""
 	if len(cfg.Providers) > 0 {
 		selectedProvider = cfg.Providers[0].ID
@@ -184,7 +243,7 @@ func (a *App) GetAppState() (config.AppState, error) {
 }
 
 func (a *App) ListProviders() ([]provider.Config, error) {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return nil, err
 	}
@@ -192,49 +251,19 @@ func (a *App) ListProviders() ([]provider.Config, error) {
 }
 
 func (a *App) CreateProvider(input provider.Config) error {
-	cfg, err := a.service.Load()
-	if err != nil {
-		return err
-	}
-	input = provider.Normalize(input)
-	if err := config.ValidateProvider(input); err != nil {
-		return err
-	}
-	cfg.UpsertProvider(input, "")
-	return a.persistPiState(cfg)
+	return a.coordinator.UpsertProvider("", input)
 }
 
 func (a *App) UpdateProvider(id string, input provider.Config) error {
-	cfg, err := a.service.Load()
-	if err != nil {
-		return err
-	}
-	input = provider.Normalize(input)
-	if err := config.ValidateProvider(input); err != nil {
-		return err
-	}
-	cfg.UpsertProvider(input, id)
-	if cfg.Settings.LastDefaultProviderID == id {
-		cfg.Settings.LastDefaultProviderID = input.ID
-	}
-	return a.persistPiState(cfg)
+	return a.coordinator.UpsertProvider(id, input)
 }
 
 func (a *App) DeleteProvider(id string) error {
-	cfg, err := a.service.Load()
-	if err != nil {
-		return err
-	}
-	cfg.DeleteProvider(id)
-	if cfg.Settings.LastDefaultProviderID == id {
-		cfg.Settings.LastDefaultProviderID = ""
-		cfg.Settings.LastDefaultModelID = ""
-	}
-	return a.persistPiState(cfg)
+	return a.coordinator.DeleteProvider(id)
 }
 
 func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return provider.ConnectionTestResult{}, err
 	}
@@ -290,7 +319,7 @@ func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
 }
 
 func (a *App) FetchModels(id string) ([]provider.ModelInfo, error) {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return nil, err
 	}
@@ -306,55 +335,20 @@ func (a *App) FetchModels(id string) ([]provider.ModelInfo, error) {
 }
 
 func (a *App) ImportModels(providerID string, models []provider.ModelInfo) error {
-	cfg, err := a.service.Load()
-	if err != nil {
-		return err
-	}
-	current, err := cfg.ProviderByID(providerID)
-	if err != nil {
-		return err
-	}
-	current.Models = provider.MergeModels(current.Models, models)
-	current = provider.Normalize(current)
-	cfg.UpsertProvider(current, providerID)
-	return a.persistPiState(cfg)
+	return a.coordinator.MergeModels(providerID, models)
 }
 
 // ReplaceModels 用给定列表整体替换该 provider 的模型集合（替换语义，未传入的将被删除）。
 func (a *App) ReplaceModels(providerID string, models []provider.ModelInfo) error {
-	cfg, err := a.service.Load()
-	if err != nil {
-		return err
-	}
-	current, err := cfg.ProviderByID(providerID)
-	if err != nil {
-		return err
-	}
-	current.Models = provider.NormalizeModels(models)
-	current = provider.Normalize(current)
-	cfg.UpsertProvider(current, providerID)
-	return a.persistPiState(cfg)
+	return a.coordinator.ReplaceModels(providerID, models)
 }
 
 func (a *App) SetDefaultModel(providerID string, modelID string) error {
-	cfg, err := a.service.Load()
-	if err != nil {
-		return err
-	}
-	current, err := cfg.ProviderByID(providerID)
-	if err != nil {
-		return err
-	}
-	current.SelectedModelID = modelID
-	cfg.UpsertProvider(current, providerID)
-	cfg.Settings.LastDefaultProviderID = providerID
-	cfg.Settings.LastDefaultModelID = modelID
-
-	return a.persistPiState(cfg)
+	return a.coordinator.SetDefault(providerID, modelID)
 }
 
 func (a *App) LaunchPi(providerID string, modelID string) (pi.LaunchPreview, error) {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return pi.LaunchPreview{}, err
 	}
@@ -370,7 +364,7 @@ func (a *App) LaunchPi(providerID string, modelID string) (pi.LaunchPreview, err
 }
 
 func (a *App) OpenConfigFolder() error {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return err
 	}
@@ -384,19 +378,18 @@ func (a *App) CheckEnvVar(name string) (system.EnvCheckResult, error) {
 }
 
 func (a *App) UpdateSettings(input config.AppSettings) error {
-	cfg, err := a.service.Load()
-	if err != nil {
+	if err := a.coordinator.UpdateSettings(input); err != nil {
 		return err
 	}
-	cfg.Settings = config.NormalizeSettings(input)
-	a.markSelfWrite()
-	return a.service.Save(cfg)
+	a.stopConfigWatcher()
+	a.startConfigWatcher()
+	return nil
 }
 
 // startBackgroundUpdateCheck 在启动时静默检测更新：距上次检查满 7 天才会拉取
 // GitHub，有新版本则向前端广播事件。检测结果（无论有无更新）都会刷新时间戳。
 func (a *App) startBackgroundUpdateCheck() {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return
 	}
@@ -415,13 +408,7 @@ func (a *App) startBackgroundUpdateCheck() {
 
 // recordUpdateCheck 刷新 LastUpdateCheckAt，作为“跳过则 7 天不检测”的持久化依据。
 func (a *App) recordUpdateCheck() error {
-	cfg, err := a.service.Load()
-	if err != nil {
-		return err
-	}
-	cfg.Settings.LastUpdateCheckAtUnix = time.Now().Unix()
-	a.markSelfWrite()
-	return a.service.Save(cfg)
+	return a.coordinator.RecordUpdateCheck()
 }
 
 // CheckForUpdate 手动检查更新（不受 7 天节流限制），并刷新检测时间戳。
@@ -459,7 +446,7 @@ func (a *App) InstallUpdate() error {
 }
 
 func (a *App) ExecuteLaunchPi(providerID string, modelID string) error {
-	cfg, err := a.service.Load()
+	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return err
 	}
@@ -467,33 +454,11 @@ func (a *App) ExecuteLaunchPi(providerID string, modelID string) error {
 	if err != nil {
 		return err
 	}
-	current.SelectedModelID = modelID
-	cfg.UpsertProvider(current, providerID)
-	cfg.Settings.LastDefaultProviderID = providerID
-	cfg.Settings.LastDefaultModelID = modelID
-	if err := a.persistPiState(cfg); err != nil {
+	if err := provider.EnsureModel(current, modelID); err != nil {
 		return err
 	}
 	command := pi.BuildCommand(cfg.Settings.PiCommand, providerID, modelID)
 	return pi.OpenCommandInTerminal(command, cfg.Settings.WorkingDir)
-}
-
-func (a *App) persistPiState(cfg config.SwitchConfig) error {
-	a.markSelfWrite()
-	if err := a.service.Save(cfg); err != nil {
-		return err
-	}
-
-	a.markSelfWrite()
-	if err := pi.WriteAllModels(cfg.Settings.PiModelsPath, cfg.Providers); err != nil {
-		return err
-	}
-	a.markSelfWrite()
-	return pi.MergeDefaults(cfg.Settings.PiSettingsPath, pi.DefaultSettings{
-		DefaultProvider:      cfg.Settings.LastDefaultProviderID,
-		DefaultModel:         cfg.Settings.LastDefaultModelID,
-		DefaultThinkingLevel: "off",
-	})
 }
 
 func firstNonEmpty(values ...string) string {

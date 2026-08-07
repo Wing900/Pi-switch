@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"piswitch/internal/paths"
+	"piswitch/internal/pi"
 	"piswitch/internal/provider"
 	"piswitch/internal/system"
 )
@@ -18,9 +19,9 @@ type AppSettings struct {
 	PiSwitchConfigPath    string `json:"piSwitchConfigPath"`
 	DarkMode              bool   `json:"darkMode"`
 	LastDefaultProviderID string `json:"lastDefaultProviderId,omitempty"`
-	LastDefaultModelID       string `json:"lastDefaultModelId,omitempty"`
-	WorkingDir               string `json:"workingDir"`
-	LastUpdateCheckAtUnix    int64  `json:"lastUpdateCheckAt,omitempty"`
+	LastDefaultModelID    string `json:"lastDefaultModelId,omitempty"`
+	WorkingDir            string `json:"workingDir"`
+	LastUpdateCheckAtUnix int64  `json:"lastUpdateCheckAt,omitempty"`
 }
 
 type SwitchConfig struct {
@@ -50,7 +51,15 @@ func NewService(appPaths paths.AppPaths) *Service {
 func (s *Service) Load() (SwitchConfig, error) {
 	configPath := s.paths.PiSwitchConfigPath
 	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {
-		return defaultConfig(s.paths), nil
+		cfg := defaultConfig(s.paths)
+		modelsExist, imported, err := readPiProviders(cfg.Settings.PiModelsPath)
+		if err != nil {
+			return SwitchConfig{}, err
+		}
+		if modelsExist {
+			cfg.Providers = syncPiProviders(cfg.Providers, imported)
+		}
+		return cfg, nil
 	}
 	data, err := os.ReadFile(configPath)
 	if err != nil {
@@ -61,32 +70,49 @@ func (s *Service) Load() (SwitchConfig, error) {
 		return SwitchConfig{}, err
 	}
 	cfg.Settings = NormalizeSettings(cfg.Settings)
-	if len(cfg.Providers) == 0 {
-		cfg.Providers = provider.Presets()
+	cfg.Settings.PiSwitchConfigPath = s.paths.PiSwitchConfigPath
+
+	modelsExist, imported, err := readPiProviders(cfg.Settings.PiModelsPath)
+	if err != nil {
+		return SwitchConfig{}, err
+	}
+	if modelsExist {
+		cfg.Providers = syncPiProviders(cfg.Providers, imported)
 	}
 	return cfg, nil
 }
 
 func (s *Service) Save(cfg SwitchConfig) error {
 	cfg.Settings = NormalizeSettings(cfg.Settings)
-	if err := os.MkdirAll(filepath.Dir(cfg.Settings.PiSwitchConfigPath), 0o755); err != nil {
+	cfg.Settings.PiSwitchConfigPath = s.paths.PiSwitchConfigPath
+	configPath := s.paths.PiSwitchConfigPath
+	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return err
 	}
-	if err := system.BackupFile(cfg.Settings.PiSwitchConfigPath); err != nil {
+	if err := system.BackupFile(configPath); err != nil {
 		return err
 	}
-	data, err := marshalCompatibleConfig(cfg.Settings.PiSwitchConfigPath, cfg)
+	data, err := marshalCompatibleConfig(configPath, cfg)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(cfg.Settings.PiSwitchConfigPath, data, 0o644)
+	return system.WriteFileAtomic(configPath, data, 0o644)
+}
+
+func (s *Service) ConfigPath() string {
+	return s.paths.PiSwitchConfigPath
 }
 
 func marshalCompatibleConfig(path string, cfg SwitchConfig) ([]byte, error) {
 	current := map[string]any{}
 	if data, err := os.ReadFile(path); err == nil {
-		_ = json.Unmarshal(data, &current)
+		if err := json.Unmarshal(data, &current); err != nil {
+			return nil, err
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return nil, err
 	}
+	delete(current, "deletedProviderIds")
 
 	encoded, err := json.Marshal(cfg)
 	if err != nil {
@@ -152,8 +178,7 @@ func mergeProviderFields(target, source map[string]any) {
 
 func defaultConfig(appPaths paths.AppPaths) SwitchConfig {
 	return SwitchConfig{
-		Version:   1,
-		Providers: provider.Presets(),
+		Version: 1,
 		Settings: NormalizeSettings(AppSettings{
 			PiCommand:          "pi",
 			PiSettingsPath:     appPaths.PiSettingsPath,
@@ -213,4 +238,45 @@ func (cfg *SwitchConfig) DeleteProvider(id string) {
 		}
 	}
 	cfg.Providers = next
+}
+
+func syncPiProviders(current []provider.Config, imported []provider.Config) []provider.Config {
+	currentByID := make(map[string]provider.Config, len(current))
+	for _, item := range current {
+		currentByID[item.ID] = item
+	}
+
+	merged := make([]provider.Config, 0, len(imported))
+	for _, incoming := range imported {
+		if currentProvider, exists := currentByID[incoming.ID]; exists {
+			currentProvider.BaseURL = incoming.BaseURL
+			currentProvider.API = incoming.API
+			currentProvider.APIKeyEnv = incoming.APIKeyEnv
+			currentProvider.APIKeyLiteral = incoming.APIKeyLiteral
+			currentProvider.Headers = incoming.Headers
+			currentProvider.Models = incoming.Models
+			currentProvider.Host = incoming.Host
+			if currentProvider.Type == "" {
+				currentProvider.Type = incoming.Type
+			}
+			if len(incoming.Headers) > 0 && (currentProvider.HeaderMode == "" || currentProvider.HeaderMode == "none") {
+				currentProvider.HeaderMode = "custom"
+			}
+			merged = append(merged, provider.Normalize(currentProvider))
+			continue
+		}
+		merged = append(merged, incoming)
+	}
+
+	return merged
+}
+
+func readPiProviders(path string) (bool, []provider.Config, error) {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return false, nil, nil
+	} else if err != nil {
+		return false, nil, err
+	}
+	providers, err := pi.ReadAllModels(path)
+	return true, providers, err
 }

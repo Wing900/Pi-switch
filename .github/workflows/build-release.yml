@@ -166,11 +166,12 @@ jobs:
           body: |
             ## 本次更新
 
-            - 支持自定义请求头身份：Codex、Claude Code、Grok Build。
-            - 支持自定义 Header 配置，并自动保存。
-            - 优化 Provider 抽屉和模型管理界面，减少重绘闪烁。
-            - 增加 `pi-model-manager` 参考项目说明。
-            - Linux 同时发布 WebKitGTK 4.1 与 4.0 ABI 构建产物，兼容 Debian 13 等新版系统。
+            - 首次启动自动读取现有 Pi Provider 与模型配置。
+            - Provider 和模型采用增量 Merge Sync，保留未修改配置与扩展字段。
+            - 默认模型改为意图式 Patch，Provider 自动保存和启动 Pi 不再改写默认设置。
+            - 增加并发修改检测、原子写入、自动备份和实时文件同步。
+            - 固定 Pi Switch 应用配置路径，修复自定义路径导致的读取分叉。
+            - Linux 同时发布 WebKitGTK 4.1 与 4.0 ABI 构建产物。
 
             ## 下载
 

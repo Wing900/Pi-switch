@@ -13,7 +13,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.12",
+  version: "0.0.0.14",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
@@ -22,7 +22,6 @@ const store = createStore({
     piCommand: "pi",
     piSettingsPath: "",
     piModelsPath: "",
-    piSwitchConfigPath: "",
     darkMode: false
   },
   presets: PRESETS,

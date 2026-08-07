@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"path/filepath"
-
-	"piswitch/internal/system"
 )
 
 type DefaultSettings struct {
 	DefaultProvider      string `json:"defaultProvider"`
 	DefaultModel         string `json:"defaultModel"`
 	DefaultThinkingLevel string `json:"defaultThinkingLevel"`
+}
+
+type DefaultPatch struct {
+	DefaultProvider *string
+	DefaultModel    *string
 }
 
 func ReadDefaults(path string) (DefaultSettings, error) {
@@ -30,25 +32,20 @@ func ReadDefaults(path string) (DefaultSettings, error) {
 	return payload, nil
 }
 
-func MergeDefaults(path string, defaults DefaultSettings) error {
-	if err := system.BackupFile(path); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-
-	payload := map[string]any{}
-	if data, err := os.ReadFile(path); err == nil {
-		_ = json.Unmarshal(data, &payload)
-	}
-	payload["defaultProvider"] = defaults.DefaultProvider
-	payload["defaultModel"] = defaults.DefaultModel
-	payload["defaultThinkingLevel"] = defaults.DefaultThinkingLevel
-
-	data, err := json.MarshalIndent(payload, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, 0o644)
+// PatchDefaults changes only fields explicitly supplied by the caller.
+// defaultThinkingLevel and every unknown setting remain untouched.
+func PatchDefaults(path string, patch DefaultPatch) error {
+	return mutateJSONDocument(path, func(payload map[string]json.RawMessage) error {
+		if patch.DefaultProvider != nil {
+			if err := setJSONField(payload, "defaultProvider", *patch.DefaultProvider); err != nil {
+				return err
+			}
+		}
+		if patch.DefaultModel != nil {
+			if err := setJSONField(payload, "defaultModel", *patch.DefaultModel); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
