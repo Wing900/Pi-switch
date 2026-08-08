@@ -30,6 +30,10 @@ export function GetAppState() {
   return window['go']['main']['App']['GetAppState']();
 }
 
+export function GetWSLDetection() {
+  return window['go']['main']['App']['GetWSLDetection']();
+}
+
 export function ImportModels(arg1, arg2) {
   return window['go']['main']['App']['ImportModels'](arg1, arg2);
 }

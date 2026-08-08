@@ -4,6 +4,7 @@ import {system} from '../models';
 import {updater} from '../models';
 import {provider} from '../models';
 import {config} from '../models';
+import {wsl} from '../models';
 import {pi} from '../models';
 
 export function CheckEnvVar(arg1:string):Promise<system.EnvCheckResult>;
@@ -19,6 +20,8 @@ export function ExecuteLaunchPi(arg1:string,arg2:string):Promise<void>;
 export function FetchModels(arg1:string):Promise<Array<provider.ModelInfo>>;
 
 export function GetAppState():Promise<config.AppState>;
+
+export function GetWSLDetection():Promise<wsl.Detection>;
 
 export function ImportModels(arg1:string,arg2:Array<provider.ModelInfo>):Promise<void>;
 

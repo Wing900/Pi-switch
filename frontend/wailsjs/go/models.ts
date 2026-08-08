@@ -237,3 +237,22 @@ export namespace updater {
 
 }
 
+export namespace wsl {
+
+	export class Detection {
+	    detected: boolean;
+	    distros: string[];
+
+	    static createFrom(source: any = {}) {
+	        return new Detection(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.detected = source["detected"];
+	        this.distros = source["distros"];
+	    }
+	}
+
+}
+
