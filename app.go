@@ -247,6 +247,10 @@ func (a *App) GetWSLDetection() (wsl.Detection, error) {
 	return wsl.Detect()
 }
 
+func (a *App) GetWSLPiDetection(distro string) (wsl.PiDetection, error) {
+	return wsl.DetectPi(distro)
+}
+
 func (a *App) ListProviders() ([]provider.Config, error) {
 	cfg, err := a.coordinator.Load()
 	if err != nil {

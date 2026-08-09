@@ -23,6 +23,8 @@ export function GetAppState():Promise<config.AppState>;
 
 export function GetWSLDetection():Promise<wsl.Detection>;
 
+export function GetWSLPiDetection(arg1:string):Promise<wsl.PiDetection>;
+
 export function ImportModels(arg1:string,arg2:Array<provider.ModelInfo>):Promise<void>;
 
 export function InstallUpdate():Promise<void>;

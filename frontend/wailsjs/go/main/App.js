@@ -34,6 +34,10 @@ export function GetWSLDetection() {
   return window['go']['main']['App']['GetWSLDetection']();
 }
 
+export function GetWSLPiDetection(arg1) {
+  return window['go']['main']['App']['GetWSLPiDetection'](arg1);
+}
+
 export function ImportModels(arg1, arg2) {
   return window['go']['main']['App']['ImportModels'](arg1, arg2);
 }

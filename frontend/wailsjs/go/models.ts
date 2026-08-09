@@ -253,6 +253,32 @@ export namespace wsl {
 	        this.distros = source["distros"];
 	    }
 	}
+	export class PiDetection {
+	    distro: string;
+	    home: string;
+	    piAvailable: boolean;
+	    piPath: string;
+	    piHome: string;
+	    piHomeExists: boolean;
+	    settingsExists: boolean;
+	    modelsExists: boolean;
+
+	    static createFrom(source: any = {}) {
+	        return new PiDetection(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.distro = source["distro"];
+	        this.home = source["home"];
+	        this.piAvailable = source["piAvailable"];
+	        this.piPath = source["piPath"];
+	        this.piHome = source["piHome"];
+	        this.piHomeExists = source["piHomeExists"];
+	        this.settingsExists = source["settingsExists"];
+	        this.modelsExists = source["modelsExists"];
+	    }
+	}
 
 }
 
