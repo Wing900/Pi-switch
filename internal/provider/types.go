@@ -68,12 +68,100 @@ func (cfg Config) MarshalJSON() ([]byte, error) {
 	return json.Marshal(fields)
 }
 
+const (
+	ModelReplaceDocumentField = "__piSwitchReplaceDocument"
+	ModelOriginalIDField      = "__piSwitchOriginalId"
+)
+
 type ModelInfo struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Reasoning     bool   `json:"reasoning"`
-	ContextWindow int    `json:"contextWindow,omitempty"`
-	MaxTokens     int    `json:"maxTokens,omitempty"`
+	ID               string                     `json:"id"`
+	Name             string                     `json:"name"`
+	API              string                     `json:"api,omitempty"`
+	BaseURL          string                     `json:"baseUrl,omitempty"`
+	Reasoning        bool                       `json:"reasoning"`
+	ThinkingLevelMap map[string]any             `json:"thinkingLevelMap,omitempty"`
+	Input            []string                   `json:"input,omitempty"`
+	Cost             map[string]any             `json:"cost,omitempty"`
+	ContextWindow    int                        `json:"contextWindow,omitempty"`
+	MaxTokens        int                        `json:"maxTokens,omitempty"`
+	SamplingParams   map[string]any             `json:"samplingParams,omitempty"`
+	Headers          map[string]string          `json:"headers,omitempty"`
+	Compat           map[string]any             `json:"compat,omitempty"`
+	ExtraFields      map[string]any             `json:"extraFields,omitempty"`
+	Extra            map[string]json.RawMessage `json:"-"`
+}
+
+var modelFields = map[string]struct{}{
+	"id": {}, "name": {}, "api": {}, "baseUrl": {}, "reasoning": {}, "thinkingLevelMap": {}, "input": {},
+	"cost": {}, "contextWindow": {}, "maxTokens": {}, "samplingParams": {}, "headers": {}, "compat": {}, "extraFields": {},
+}
+
+// UnmarshalJSON keeps model-specific fields that Pi or a provider may support.
+// This lets the editor expose the complete model object without losing fields
+// unknown to Pi Switch.
+func (model *ModelInfo) UnmarshalJSON(data []byte) error {
+	type modelAlias ModelInfo
+	var decoded modelAlias
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	raw := map[string]json.RawMessage{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	for field := range modelFields {
+		delete(raw, field)
+	}
+	*model = ModelInfo(decoded)
+	model.Extra = raw
+	if len(raw) > 0 {
+		if model.ExtraFields == nil {
+			model.ExtraFields = make(map[string]any, len(raw))
+		}
+		for field, value := range raw {
+			var decodedValue any
+			if err := json.Unmarshal(value, &decodedValue); err != nil {
+				return err
+			}
+			if _, exists := model.ExtraFields[field]; !exists {
+				model.ExtraFields[field] = decodedValue
+			}
+		}
+	}
+	return nil
+}
+
+func (model ModelInfo) MarshalJSON() ([]byte, error) {
+	type modelAlias ModelInfo
+	data, err := json.Marshal(modelAlias(model))
+	if err != nil {
+		return nil, err
+	}
+	fields := map[string]json.RawMessage{}
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return nil, err
+	}
+	extraFields := make(map[string]any, len(model.Extra)+len(model.ExtraFields))
+	for field, value := range model.Extra {
+		var decodedValue any
+		if err := json.Unmarshal(value, &decodedValue); err != nil {
+			return nil, err
+		}
+		extraFields[field] = decodedValue
+	}
+	for field, value := range model.ExtraFields {
+		extraFields[field] = value
+	}
+	if len(extraFields) == 0 {
+		delete(fields, "extraFields")
+	} else {
+		encodedExtraFields, err := json.Marshal(extraFields)
+		if err != nil {
+			return nil, err
+		}
+		fields["extraFields"] = encodedExtraFields
+	}
+	return json.Marshal(fields)
 }
 
 type ConnectionTestResult struct {

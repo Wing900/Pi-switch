@@ -97,9 +97,18 @@ export namespace provider {
 	export class ModelInfo {
 	    id: string;
 	    name: string;
+	    api?: string;
+	    baseUrl?: string;
 	    reasoning: boolean;
+	    thinkingLevelMap?: Record<string, any>;
+	    input?: string[];
+	    cost?: Record<string, any>;
 	    contextWindow?: number;
 	    maxTokens?: number;
+	    samplingParams?: Record<string, any>;
+	    headers?: Record<string, string>;
+	    compat?: Record<string, any>;
+	    extraFields?: Record<string, any>;
 	
 	    static createFrom(source: any = {}) {
 	        return new ModelInfo(source);
@@ -109,9 +118,18 @@ export namespace provider {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
+	        this.api = source["api"];
+	        this.baseUrl = source["baseUrl"];
 	        this.reasoning = source["reasoning"];
+	        this.thinkingLevelMap = source["thinkingLevelMap"];
+	        this.input = source["input"];
+	        this.cost = source["cost"];
 	        this.contextWindow = source["contextWindow"];
 	        this.maxTokens = source["maxTokens"];
+	        this.samplingParams = source["samplingParams"];
+	        this.headers = source["headers"];
+	        this.compat = source["compat"];
+	        this.extraFields = source["extraFields"];
 	    }
 	}
 	export class Config {

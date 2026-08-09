@@ -27,6 +27,18 @@
   width: min(570px, 100%);
 }
 
+.modal-dialog--model-editor {
+  width: min(860px, 100%);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-dialog--model-editor .modal-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .modal-dialog--success {
   border-top: 2px solid var(--success);
 }
@@ -234,10 +246,6 @@
 .model-cw-unit {
   color: var(--ink-muted);
   font-size: 10px;
-}
-
-.manual-model-form {
-  border-top: 1px solid var(--line-subtle);
 }
 
 .headers-editor {

@@ -123,7 +123,7 @@ func MergeModels(path string, providerID string, incoming []provider.ModelInfo) 
 	err := mutateProviderModels(path, providerID, func(existing []provider.ModelInfo) []provider.ModelInfo {
 		result = provider.MergeModels(existing, incoming)
 		return result
-	})
+	}, true)
 	return result, err
 }
 
@@ -131,11 +131,17 @@ func ReplaceModels(path string, providerID string, models []provider.ModelInfo) 
 	result := provider.NormalizeModels(models)
 	err := mutateProviderModels(path, providerID, func([]provider.ModelInfo) []provider.ModelInfo {
 		return result
-	})
+	}, true)
+	for index := range result {
+		delete(result[index].Extra, replaceModelDocumentField)
+		delete(result[index].Extra, provider.ModelOriginalIDField)
+		delete(result[index].ExtraFields, replaceModelDocumentField)
+		delete(result[index].ExtraFields, provider.ModelOriginalIDField)
+	}
 	return result, err
 }
 
-func mutateProviderModels(path string, providerID string, mutate func([]provider.ModelInfo) []provider.ModelInfo) error {
+func mutateProviderModels(path string, providerID string, mutate func([]provider.ModelInfo) []provider.ModelInfo, preserveExistingFields bool) error {
 	return mutateJSONDocument(path, func(payload map[string]json.RawMessage) error {
 		providers, err := decodeProviders(payload)
 		if err != nil {
@@ -155,7 +161,7 @@ func mutateProviderModels(path string, providerID string, mutate func([]provider
 			return err
 		}
 		nextModels := provider.NormalizeModels(mutate(existingModels))
-		mergedModels, err := mergeModelDocuments(fields["models"], nextModels)
+		mergedModels, err := mergeModelDocuments(fields["models"], nextModels, preserveExistingFields)
 		if err != nil {
 			return err
 		}
@@ -212,7 +218,7 @@ func mergeProviderDocument(existing json.RawMessage, cfg provider.Config, includ
 		return nil, err
 	}
 	if includeModels {
-		models, err := mergeModelDocuments(fields["models"], cfg.Models)
+		models, err := mergeModelDocuments(fields["models"], cfg.Models, true)
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +227,14 @@ func mergeProviderDocument(existing json.RawMessage, cfg provider.Config, includ
 	return json.Marshal(fields)
 }
 
-func mergeModelDocuments(existing json.RawMessage, models []provider.ModelInfo) (json.RawMessage, error) {
+var knownModelDocumentFields = map[string]struct{}{
+	"id": {}, "name": {}, "api": {}, "baseUrl": {}, "reasoning": {}, "thinkingLevelMap": {}, "input": {},
+	"cost": {}, "contextWindow": {}, "maxTokens": {}, "samplingParams": {}, "headers": {}, "compat": {},
+}
+
+const replaceModelDocumentField = provider.ModelReplaceDocumentField
+
+func mergeModelDocuments(existing json.RawMessage, models []provider.ModelInfo, preserveExistingFields bool) (json.RawMessage, error) {
 	existingByID := map[string]map[string]json.RawMessage{}
 	if len(existing) > 0 {
 		var rawModels []json.RawMessage
@@ -251,10 +264,45 @@ func mergeModelDocuments(existing json.RawMessage, models []provider.ModelInfo) 
 		if err := json.Unmarshal(encodedModel, &nextFields); err != nil {
 			return nil, err
 		}
-		if oldFields := existingByID[model.ID]; oldFields != nil {
-			for key, value := range oldFields {
-				if _, exists := nextFields[key]; !exists {
+		if rawExtraFields, exists := nextFields["extraFields"]; exists {
+			extraFields := map[string]json.RawMessage{}
+			if err := json.Unmarshal(rawExtraFields, &extraFields); err != nil {
+				return nil, err
+			}
+			for key, value := range extraFields {
+				if key == "selected" {
+					continue
+				}
+				if key == replaceModelDocumentField || key == provider.ModelOriginalIDField {
 					nextFields[key] = value
+					continue
+				}
+				if _, known := knownModelDocumentFields[key]; !known {
+					nextFields[key] = value
+				}
+			}
+			delete(nextFields, "extraFields")
+		}
+		delete(nextFields, provider.ModelOriginalIDField)
+		replaceDocument := false
+		if rawReplace, exists := nextFields[replaceModelDocumentField]; exists {
+			_ = json.Unmarshal(rawReplace, &replaceDocument)
+			delete(nextFields, replaceModelDocumentField)
+		}
+		if preserveExistingFields && !replaceDocument {
+			if oldFields := existingByID[model.ID]; oldFields != nil {
+				for key, value := range oldFields {
+					// selected is a UI-only flag used by the import dialog,
+					// never a Pi model parameter.
+					if key == "selected" || key == replaceModelDocumentField || key == provider.ModelOriginalIDField {
+						continue
+					}
+					if _, known := knownModelDocumentFields[key]; known {
+						continue
+					}
+					if _, exists := nextFields[key]; !exists {
+						nextFields[key] = value
+					}
 				}
 			}
 		}

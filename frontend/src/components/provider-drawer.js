@@ -27,31 +27,29 @@ function field({ label, name, value, type = "text" }) {
 
 export function modelManageList(provider) {
   const models = provider.models ?? [];
-  if (!models.length) {
-    return `
-      <div class="form-section model-manage">
-        <span class="form-field__label">模型管理</span>
-        <p class="model-manage__empty">暂无已导入模型，点击底部「获取模型」拉取。</p>
-      </div>
-    `;
-  }
   return `
     <div class="form-section model-manage">
-      <span class="form-field__label">模型管理（共 ${models.length} 个，点击 × 移除）</span>
-      <div class="model-manage__list">
-        ${models
-          .map((model) => {
-            const cw = model.contextWindow ? Math.round(model.contextWindow / 1000) + "K" : "";
-            return `
-              <div class="model-manage__row">
-                <span class="model-manage__name">${escapeHtml(model.name || model.id)}</span>
-                <span class="model-manage__meta">${escapeHtml(model.id)}${cw ? " · " + cw : ""}${model.reasoning ? " · 推理" : ""}</span>
-                <button class="model-manage__remove" data-delete-model="${escapeHtml(model.id)}" aria-label="移除 ${escapeHtml(model.name || model.id)}" title="移除">×</button>
-              </div>
-            `;
-          })
-          .join("")}
+      <div class="model-manage__heading">
+        <span class="form-field__label">模型管理${models.length ? `（共 ${models.length} 个）` : ""}</span>
+        <button class="text-button model-manage__add" type="button" data-add-model>添加模型</button>
       </div>
+      ${models.length ? `
+        <div class="model-manage__list">
+          ${models
+            .map((model) => {
+              const cw = model.contextWindow ? Math.round(model.contextWindow / 1000) + "K" : "";
+              return `
+                <div class="model-manage__row">
+                  <span class="model-manage__name">${escapeHtml(model.name || model.id)}</span>
+                  <span class="model-manage__meta">${escapeHtml(model.id)}${cw ? " · " + cw : ""}${model.reasoning ? " · 推理" : ""}</span>
+                  <button type="button" class="model-manage__edit" data-edit-model="${escapeHtml(model.id)}" aria-label="编辑 ${escapeHtml(model.name || model.id)}" title="编辑">编辑</button>
+                  <button type="button" class="model-manage__remove" data-delete-model="${escapeHtml(model.id)}" aria-label="移除 ${escapeHtml(model.name || model.id)}" title="移除">×</button>
+                </div>
+              `;
+            })
+            .join("")}
+        </div>
+      ` : '<p class="model-manage__empty">暂无已导入模型，可点击「添加模型」直接录入完整 JSON。</p>'}
     </div>
   `;
 }
