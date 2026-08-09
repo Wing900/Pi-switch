@@ -1,4 +1,4 @@
-import { COMPAT_BOOLEAN_FIELDS, COMPAT_ENUM_FIELDS, MODEL_EDITOR_FIELDS, THINKING_LEVELS } from "./model-fields.js";
+import { COMPAT_BOOLEAN_FIELDS, COMPAT_ENUM_FIELDS, THINKING_LEVELS } from "./model-fields.js";
 
 const COST_FIELDS = ["input", "output", "cacheRead", "cacheWrite"];
 const COST_TIER_FIELDS = ["inputTokensAbove", ...COST_FIELDS];
@@ -34,12 +34,15 @@ function parseObjectJson(rawValue, label) {
   return value;
 }
 
-function readNumber(rawValue, label, { integer = false } = {}) {
+function readNumber(rawValue, label, { integer = false, positive = false } = {}) {
   const value = String(rawValue ?? "").trim();
   if (!value) return undefined;
   const number = Number(value);
-  if (!Number.isFinite(number) || number < 0 || (integer && !Number.isInteger(number))) {
-    throw new Error(`${label} 必须是非负${integer ? "整数" : "数字"}`);
+  const invalid = !Number.isFinite(number)
+    || (positive ? number <= 0 : number < 0)
+    || (integer && !Number.isInteger(number));
+  if (invalid) {
+    throw new Error(`${label} 必须是${positive ? "正" : "非负"}${integer ? "整数" : "数字"}`);
   }
   return number;
 }
@@ -106,14 +109,7 @@ function readCost(originalModel, value) {
 }
 
 function readCompat(originalModel, value) {
-  const originalCompat = objectEntries(originalModel.compat);
-  const compat = Object.fromEntries(
-    originalCompat.filter(([field]) =>
-      !COMPAT_BOOLEAN_FIELDS.some(([knownField]) => knownField === field)
-      && !COMPAT_ENUM_FIELDS.some(([knownField]) => knownField === field)
-      && !COMPAT_JSON_FIELDS.includes(field)
-    )
-  );
+  const compat = {};
 
   for (const [name] of COMPAT_BOOLEAN_FIELDS) {
     const fieldValue = value(`modelCompat_${name}`);
@@ -125,7 +121,7 @@ function readCompat(originalModel, value) {
       compat[name] = fieldValue;
     }
     if (fieldValue === "__custom__") {
-      const originalValue = originalCompat.find(([field]) => field === name)?.[1];
+      const originalValue = originalModel.compat?.[name];
       if (originalValue !== undefined) compat[name] = originalValue;
     }
   }
@@ -151,24 +147,23 @@ export function readModelDraft({
   const id = value("modelId");
   if (!id) throw new Error("模型 id 不能为空");
 
-  const contextWindow = readNumber(value("modelContextWindow"), "上下文窗口", { integer: true });
-  const maxTokens = readNumber(value("modelMaxTokens"), "最大输出", { integer: true });
+  const contextWindow = readNumber(value("modelContextWindow"), "上下文窗口", { integer: true, positive: true });
+  const maxTokens = readNumber(value("modelMaxTokens"), "最大输出", { integer: true, positive: true });
   const thinkingLevelMap = readThinkingLevelMap(originalModel, value);
   const cost = readCost(originalModel, value);
   const compat = readCompat(originalModel, value);
   const samplingParams = parseObjectJson(value("modelSamplingParams"), "samplingParams");
   const headers = validateHeaders(parseObjectJson(value("modelHeaders"), "headers"), "headers");
-  const extra = parseJson(value("modelExtraJson"), "其他字段", {});
+  const compatExtraFieldsJson = value("modelCompatExtraJson");
+  parseObjectJson(compatExtraFieldsJson, "其他 compat 字段");
+  const extraFieldsJson = value("modelExtraJson");
+  const extra = parseJson(extraFieldsJson, "其他字段", {});
   if (!extra || Array.isArray(extra) || typeof extra !== "object") {
     throw new Error("其他字段必须是 JSON 对象");
   }
 
   const inputs = readCheckedValues("modelInput");
-  const draft = { ...extra };
-  delete draft.selected;
-  delete draft.extraFields;
-  delete draft.__piSwitchReplaceDocument;
-  delete draft.__piSwitchOriginalId;
+  const draft = {};
   Object.assign(draft, {
     id,
     ...(Object.prototype.hasOwnProperty.call(originalModel, "api") ? { api: originalModel.api } : {}),
@@ -183,19 +178,12 @@ export function readModelDraft({
     ...(samplingParams === undefined ? {} : { samplingParams }),
     ...(headers === undefined ? {} : { headers }),
     ...(compat === undefined ? {} : { compat }),
-    __piSwitchReplaceDocument: true,
-    ...(originalModel.id && originalModel.id !== id ? { __piSwitchOriginalId: originalModel.id } : {})
+    ...(compatExtraFieldsJson ? { compatExtraFieldsJson } : {}),
+    ...(extraFieldsJson ? { extraFieldsJson } : {}),
+    ...(originalModel.revision ? { revision: originalModel.revision } : {}),
+    replaceDocument: true,
+    ...(originalModel.id && originalModel.id !== id ? { originalId: originalModel.id } : {})
   });
 
   return draft;
-}
-
-export function modelExtraFields(model) {
-  const transportedExtra = model?.extraFields && typeof model.extraFields === "object" && !Array.isArray(model.extraFields)
-    ? model.extraFields
-    : {};
-  return {
-    ...transportedExtra,
-    ...Object.fromEntries(objectEntries(model).filter(([field]) => !MODEL_EDITOR_FIELDS.has(field)))
-  };
 }

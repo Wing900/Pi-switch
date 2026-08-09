@@ -231,9 +231,14 @@ func (a *App) GetAppState() (config.AppState, error) {
 	defaultProviderID := firstNonEmpty(piDefaults.DefaultProvider, cfg.Settings.LastDefaultProviderID, selectedProvider)
 	defaultModelID := firstNonEmpty(piDefaults.DefaultModel, cfg.Settings.LastDefaultModelID)
 
+	providerTransports, err := provider.ConfigTransports(cfg.Providers)
+	if err != nil {
+		return config.AppState{}, err
+	}
+
 	return config.AppState{
 		Version:            appVersion,
-		Providers:          cfg.Providers,
+		Providers:          providerTransports,
 		SelectedProviderID: selectedProvider,
 		DefaultProviderID:  defaultProviderID,
 		DefaultModelID:     defaultModelID,
@@ -242,20 +247,39 @@ func (a *App) GetAppState() (config.AppState, error) {
 	}, nil
 }
 
-func (a *App) ListProviders() ([]provider.Config, error) {
+func (a *App) ListProviders() ([]provider.ConfigTransport, error) {
 	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return nil, err
 	}
-	return cfg.Providers, nil
+	return provider.ConfigTransports(cfg.Providers)
 }
 
-func (a *App) CreateProvider(input provider.Config) error {
-	return a.coordinator.UpsertProvider("", input)
+func (a *App) CreateProvider(input provider.ConfigTransport) (provider.ConfigTransport, error) {
+	converted, err := input.Config()
+	if err != nil {
+		return provider.ConfigTransport{}, err
+	}
+	if err := a.coordinator.UpsertProvider("", converted); err != nil {
+		return provider.ConfigTransport{}, err
+	}
+	cfg, err := a.coordinator.Load()
+	if err != nil {
+		return provider.ConfigTransport{}, err
+	}
+	persisted, err := cfg.ProviderByID(converted.ID)
+	if err != nil {
+		return provider.ConfigTransport{}, err
+	}
+	return provider.NewConfigTransport(persisted)
 }
 
-func (a *App) UpdateProvider(id string, input provider.Config) error {
-	return a.coordinator.UpsertProvider(id, input)
+func (a *App) UpdateProvider(id string, input provider.ConfigTransport) error {
+	converted, err := input.Config()
+	if err != nil {
+		return err
+	}
+	return a.coordinator.UpsertProvider(id, converted)
 }
 
 func (a *App) DeleteProvider(id string) error {
@@ -318,7 +342,7 @@ func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
 	}, nil
 }
 
-func (a *App) FetchModels(id string) ([]provider.ModelInfo, error) {
+func (a *App) FetchModels(id string) ([]provider.ModelTransport, error) {
 	cfg, err := a.coordinator.Load()
 	if err != nil {
 		return nil, err
@@ -331,16 +355,32 @@ func (a *App) FetchModels(id string) ([]provider.ModelInfo, error) {
 	if current.APIKeyEnv != "" && !envResult.Found {
 		return nil, errors.New("环境变量 " + current.APIKeyEnv + " 不存在")
 	}
-	return provider.FetchModelsByAPI(current, key)
+	models, err := provider.FetchModelsByAPI(current, key)
+	if err != nil {
+		return nil, err
+	}
+	return provider.ModelTransports(models)
 }
 
-func (a *App) ImportModels(providerID string, models []provider.ModelInfo) error {
-	return a.coordinator.MergeModels(providerID, models)
+func (a *App) ImportModels(providerID string, models []provider.ModelTransport) error {
+	converted, err := provider.ModelsFromTransport(models)
+	if err != nil {
+		return err
+	}
+	return a.coordinator.MergeModels(providerID, converted)
 }
 
 // ReplaceModels 用给定列表整体替换该 provider 的模型集合（替换语义，未传入的将被删除）。
-func (a *App) ReplaceModels(providerID string, models []provider.ModelInfo) error {
-	return a.coordinator.ReplaceModels(providerID, models)
+func (a *App) ReplaceModels(providerID string, models []provider.ModelTransport, expectedRevision string) (provider.ModelListTransport, error) {
+	converted, err := provider.ModelsFromTransport(models)
+	if err != nil {
+		return provider.ModelListTransport{}, err
+	}
+	replaced, err := a.coordinator.ReplaceModels(providerID, converted, expectedRevision)
+	if err != nil {
+		return provider.ModelListTransport{}, err
+	}
+	return provider.NewModelListTransport(replaced)
 }
 
 func (a *App) SetDefaultModel(providerID string, modelID string) error {

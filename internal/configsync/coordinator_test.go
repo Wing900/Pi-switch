@@ -1,7 +1,6 @@
 package configsync
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,18 +45,25 @@ func TestReplaceModelsRenamesSelectedAndDefaultModel(t *testing.T) {
 	}
 	initialConfig.Settings.LastDefaultProviderID = "p"
 	initialConfig.Settings.LastDefaultModelID = "old-id"
+	oldModel, err := initialConfig.ProviderByID("p")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldRevision := oldModel.Models[0].Revision
+	if oldRevision == "" {
+		t.Fatal("loaded model has no revision")
+	}
 	if err := service.Save(initialConfig); err != nil {
 		t.Fatal(err)
 	}
 
 	coordinator := New(service, nil)
-	if err := coordinator.ReplaceModels("p", []provider.ModelInfo{{
-		ID:   "new-id",
-		Name: "New",
-		ExtraFields: map[string]any{
-			provider.ModelReplaceDocumentField: true,
-			provider.ModelOriginalIDField:      "old-id",
-		},
+	if _, err := coordinator.ReplaceModels("p", []provider.ModelInfo{{
+		ID:              "new-id",
+		Name:            "New",
+		ReplaceDocument: true,
+		OriginalID:      "old-id",
+		Revision:        oldRevision,
 	}}); err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +99,7 @@ func TestReplaceModelsRenamesSelectedAndDefaultModel(t *testing.T) {
 		t.Fatal("models document is empty")
 	}
 	encoded := string(data)
-	if containsAny(encoded, provider.ModelReplaceDocumentField, provider.ModelOriginalIDField, "extraFields") {
+	if containsAny(encoded, "replaceDocument", "originalId") {
 		t.Fatalf("internal transport metadata leaked into models.json: %s", encoded)
 	}
 }
@@ -107,25 +113,17 @@ func containsAny(value string, needles ...string) bool {
 	return false
 }
 
-func TestModelRenamesExtractsAndRemovesInternalMetadata(t *testing.T) {
+func TestModelRenamesReadsMetadataWithoutMutatingModels(t *testing.T) {
 	models := []provider.ModelInfo{{
-		ID: "new-id",
-		ExtraFields: map[string]any{
-			provider.ModelOriginalIDField: "old-id",
-		},
-		Extra: map[string]json.RawMessage{
-			provider.ModelOriginalIDField: json.RawMessage(`"old-id"`),
-		},
+		ID:         "new-id",
+		OriginalID: "old-id",
 	}}
 
 	renames := modelRenames(models)
 	if renames["old-id"] != "new-id" {
 		t.Fatalf("renames = %#v, want old-id -> new-id", renames)
 	}
-	if _, exists := models[0].ExtraFields[provider.ModelOriginalIDField]; exists {
-		t.Fatal("original model id metadata remained in ExtraFields")
-	}
-	if _, exists := models[0].Extra[provider.ModelOriginalIDField]; exists {
-		t.Fatal("original model id metadata remained in Extra")
+	if models[0].OriginalID != "old-id" {
+		t.Fatal("rename metadata was mutated before the persistence layer used it")
 	}
 }

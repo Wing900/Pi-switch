@@ -1,5 +1,4 @@
 import { escapeHtml } from "./view-utils.js";
-import { modelExtraFields } from "../config/model-editor.js";
 import { COMPAT_BOOLEAN_FIELDS, COMPAT_ENUM_FIELDS, THINKING_LEVELS } from "../config/model-fields.js";
 
 function modalFrame({ tone = "", eyebrow = "", title, description = "", body = "", actions = "", wide = false, className = "" }) {
@@ -107,11 +106,11 @@ function fetchModelsModal(payload) {
   });
 }
 
-function modelTextField({ label, name, value = "", description = "", type = "text", step = "" }) {
+function modelTextField({ label, name, value = "", description = "", type = "text", step = "", min = "" }) {
   return `
     <label class="model-editor-field">
       <span class="model-editor-field__label">${escapeHtml(label)}</span>
-      <input name="${escapeHtml(name)}" type="${type}" value="${escapeHtml(value)}" autocomplete="off" ${step ? `step="${step}"` : ""}>
+      <input name="${escapeHtml(name)}" type="${type}" value="${escapeHtml(value)}" autocomplete="off" ${step ? `step="${step}"` : ""} ${min ? `min="${min}"` : ""}>
       ${description ? `<small>${escapeHtml(description)}</small>` : ""}
     </label>
   `;
@@ -122,6 +121,16 @@ function modelJsonField({ label, name, value, placeholder, description }) {
     <label class="model-editor-json-field">
       <span class="model-editor-field__label">${escapeHtml(label)}</span>
       <textarea name="${escapeHtml(name)}" spellcheck="false" autocomplete="off" placeholder="${escapeHtml(placeholder || "{}")}">${value ? escapeHtml(JSON.stringify(value, null, 2)) : ""}</textarea>
+      ${description ? `<small>${escapeHtml(description)}</small>` : ""}
+    </label>
+  `;
+}
+
+function modelRawJsonField({ label, name, value, placeholder, description }) {
+  return `
+    <label class="model-editor-json-field">
+      <span class="model-editor-field__label">${escapeHtml(label)}</span>
+      <textarea name="${escapeHtml(name)}" spellcheck="false" autocomplete="off" placeholder="${escapeHtml(placeholder || "{}")}">${value ? escapeHtml(value) : ""}</textarea>
       ${description ? `<small>${escapeHtml(description)}</small>` : ""}
     </label>
   `;
@@ -166,7 +175,6 @@ function modelEditorModal(payload) {
   const cost = model.cost || {};
   const compat = model.compat || {};
   const thinkingLevelMap = model.thinkingLevelMap || {};
-  const extra = modelExtraFields(model);
   const checkbox = (name, value, label, description = "") => `
     <label class="model-editor-check">
       <input type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(value)}" ${inputTypes.includes(value) ? "checked" : ""}>
@@ -207,8 +215,8 @@ function modelEditorModal(payload) {
             <p>这些字段主要影响 Pi 是否显示图片、是否启用思考，以及何时压缩上下文。</p>
           </div>
           <div class="model-editor-grid model-editor-grid--two">
-            ${modelTextField({ label: "上下文窗口（tokens）", name: "modelContextWindow", value: model.contextWindow ?? 128000, type: "number", description: "模型一次能接收的最大上下文，不是字节数；填小了会提前压缩，填大了可能被服务端拒绝。" })}
-            ${modelTextField({ label: "最大输出（tokens）", name: "modelMaxTokens", value: model.maxTokens ?? 16384, type: "number", description: "单次回复最多生成的 token 数，不等于上下文窗口。" })}
+            ${modelTextField({ label: "上下文窗口（tokens）", name: "modelContextWindow", value: model.contextWindow ?? 128000, type: "number", min: "1", description: "模型一次能接收的最大上下文，不是字节数；填小了会提前压缩，填大了可能被服务端拒绝。" })}
+            ${modelTextField({ label: "最大输出（tokens）", name: "modelMaxTokens", value: model.maxTokens ?? 16384, type: "number", min: "1", description: "单次回复最多生成的 token 数，不等于上下文窗口。" })}
           </div>
           <label class="model-editor-toggle">
             <input type="checkbox" name="modelReasoning" ${model.reasoning ? "checked" : ""}>
@@ -291,6 +299,7 @@ function modelEditorModal(payload) {
             ${modelJsonField({ label: "chatTemplateArgs", name: "modelCompat_chatTemplateArgs", value: compat.chatTemplateArgs, placeholder: '{"enable_thinking":{"$var":"thinking.enabled"}}', description: "Baseten 等接口使用的模板参数；只有对应 thinkingFormat 时才生效。" })}
             ${modelJsonField({ label: "openRouterRouting", name: "modelCompat_openRouterRouting", value: compat.openRouterRouting, placeholder: '{"only":["anthropic"],"allow_fallbacks":false}', description: "OpenRouter 路由约束，例如 only、order、ignore、价格或延迟偏好。" })}
             ${modelJsonField({ label: "vercelGatewayRouting", name: "modelCompat_vercelGatewayRouting", value: compat.vercelGatewayRouting, placeholder: '{"only":["anthropic"]}', description: "Vercel AI Gateway 的 Provider 路由顺序或白名单。" })}
+            ${modelRawJsonField({ label: "其他 compat 字段", name: "modelCompatExtraJson", value: model.compatExtraFieldsJson, placeholder: '{"futureCompat":true}', description: "Pi 新版本或服务商扩展的 compat 字段；这里可以新增、修改或删除，结构化字段冲突时以上方表单为准。" })}
           </div>
         </details>
 
@@ -299,7 +308,7 @@ function modelEditorModal(payload) {
             <h4>其他字段</h4>
             <p>Pi 新版本或扩展支持的字段可以放在这里；保存时会与上面的字段合并，字段名冲突时以上方表单为准。</p>
           </div>
-          <textarea class="model-editor-extra" name="modelExtraJson" spellcheck="false" autocomplete="off" placeholder='{"vendorOption":true}'>${extra && Object.keys(extra).length ? escapeHtml(JSON.stringify(extra, null, 2)) : ""}</textarea>
+          <textarea class="model-editor-extra" name="modelExtraJson" spellcheck="false" autocomplete="off" placeholder='{"vendorOption":true}'>${model.extraFieldsJson ? escapeHtml(model.extraFieldsJson) : ""}</textarea>
         </section>
       </div>
     `,

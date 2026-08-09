@@ -54,8 +54,8 @@ export function OpenConfigFolder() {
   return window['go']['main']['App']['OpenConfigFolder']();
 }
 
-export function ReplaceModels(arg1, arg2) {
-  return window['go']['main']['App']['ReplaceModels'](arg1, arg2);
+export function ReplaceModels(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ReplaceModels'](arg1, arg2, arg3);
 }
 
 export function SetDefaultModel(arg1, arg2) {

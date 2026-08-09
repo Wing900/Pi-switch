@@ -1,7 +1,6 @@
 package configsync
 
 import (
-	"encoding/json"
 	"errors"
 	"sync"
 	"time"
@@ -139,7 +138,7 @@ func (c *Coordinator) MergeModels(providerID string, models []provider.ModelInfo
 	return c.saveAppConfig(cfg)
 }
 
-func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelInfo) error {
+func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelInfo, expectedRevisions ...string) ([]provider.ModelInfo, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -147,16 +146,16 @@ func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelIn
 
 	cfg, current, err := c.providerState(providerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defaults, err := pi.ReadDefaults(cfg.Settings.PiSettingsPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	replaced, err := pi.ReplaceModels(cfg.Settings.PiModelsPath, providerID, models)
+	replaced, err := pi.ReplaceModels(cfg.Settings.PiModelsPath, providerID, models, expectedRevisions...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	c.wrote(cfg.Settings.PiModelsPath)
 	current.Models = replaced
@@ -178,7 +177,7 @@ func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelIn
 		if renamedID := renames[defaultModelID]; renamedID != "" {
 			defaultModelID = renamedID
 			if err := pi.PatchDefaults(cfg.Settings.PiSettingsPath, pi.DefaultPatch{DefaultModel: stringPointer(defaultModelID)}); err != nil {
-				return err
+				return nil, err
 			}
 			c.wrote(cfg.Settings.PiSettingsPath)
 		}
@@ -187,7 +186,7 @@ func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelIn
 	if defaultRemoved {
 		empty := ""
 		if err := pi.PatchDefaults(cfg.Settings.PiSettingsPath, pi.DefaultPatch{DefaultModel: &empty}); err != nil {
-			return err
+			return nil, err
 		}
 		c.wrote(cfg.Settings.PiSettingsPath)
 	}
@@ -199,7 +198,10 @@ func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelIn
 			cfg.Settings.LastDefaultModelID = ""
 		}
 	}
-	return c.saveAppConfig(cfg)
+	if err := c.saveAppConfig(cfg); err != nil {
+		return nil, err
+	}
+	return replaced, nil
 }
 
 func (c *Coordinator) SetDefault(providerID string, modelID string) error {
@@ -231,24 +233,10 @@ func (c *Coordinator) SetDefault(providerID string, modelID string) error {
 func modelRenames(models []provider.ModelInfo) map[string]string {
 	renames := map[string]string{}
 	for index := range models {
-		value, exists := models[index].ExtraFields[provider.ModelOriginalIDField]
-		if !exists {
-			if rawValue, rawExists := models[index].Extra[provider.ModelOriginalIDField]; rawExists {
-				var oldID string
-				if json.Unmarshal(rawValue, &oldID) == nil {
-					value = oldID
-					exists = true
-				}
-			}
+		oldID := models[index].OriginalID
+		if oldID != "" && oldID != models[index].ID {
+			renames[oldID] = models[index].ID
 		}
-		if exists {
-			oldID, ok := value.(string)
-			if ok && oldID != "" && oldID != models[index].ID {
-				renames[oldID] = models[index].ID
-			}
-		}
-		delete(models[index].ExtraFields, provider.ModelOriginalIDField)
-		delete(models[index].Extra, provider.ModelOriginalIDField)
 	}
 	return renames
 }

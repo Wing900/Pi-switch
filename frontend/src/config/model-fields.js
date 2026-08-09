@@ -1,9 +1,3 @@
-export const MODEL_EDITOR_FIELDS = new Set([
-  "id", "name", "api", "baseUrl", "reasoning", "thinkingLevelMap", "input",
-  "cost", "contextWindow", "maxTokens", "samplingParams", "headers", "compat",
-  "__piSwitchReplaceDocument", "__piSwitchOriginalId", "extraFields", "selected"
-]);
-
 export const THINKING_LEVELS = [
   ["off", "关闭"],
   ["minimal", "Minimal"],
@@ -35,7 +29,11 @@ export const COMPAT_BOOLEAN_FIELDS = [
   ["allowEmptySignature", "允许空 thinking signature", "仅适用于会返回空思考签名的 Anthropic 兼容代理。"],
   ["supportsStrictTools", "Anthropic 严格工具", "Anthropic 接口是否接受严格 JSON Schema 工具。"],
   ["supportsToolReferences", "支持工具引用", "Anthropic 兼容接口是否支持工具引用。"],
-  ["supportsToolSearch", "支持工具搜索", "Responses API 是否支持工具搜索能力。"]
+  ["supportsToolSearch", "支持工具搜索", "Responses API 是否支持工具搜索能力。"],
+  ["zaiToolStream", "支持 Z.ai 工具流", "是否发送 tool_stream 以流式接收 Z.ai 工具调用。"],
+  ["supportsThinkingTokenBudget", "支持思考 token 预算", "是否支持 vLLM 风格的 thinking_token_budget。"],
+  ["supportsAdditionalTools", "支持 additional_tools", "Responses API 是否支持按消息挂载 additional_tools。"],
+  ["supportsExplicitPromptCacheMode", "支持显式提示缓存", "是否支持 prompt_cache_options 的显式缓存模式。"]
 ];
 
 export const COMPAT_ENUM_FIELDS = [

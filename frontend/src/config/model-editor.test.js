@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { modelExtraFields, readModelDraft } from "./model-editor.js";
+import { readModelDraft } from "./model-editor.js";
 
 const levels = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
 const compatEnums = ["maxTokensField", "thinkingFormat", "cacheControlFormat", "deferredToolsMode", "sessionAffinityFormat"];
@@ -15,6 +15,7 @@ function form(overrides = {}) {
     modelCostTiers: "",
     modelSamplingParams: "",
     modelHeaders: "",
+    modelCompatExtraJson: "",
     modelExtraJson: "",
     ...Object.fromEntries(levels.map((level) => [`modelThinkingMode_${level}`, "inherit"])),
     ...Object.fromEntries(compatEnums.map((field) => [`modelCompat_${field}`, "inherit"])),
@@ -63,7 +64,6 @@ test("builds a complete model draft and keeps hidden API fields", () => {
   }));
 
   assert.deepEqual(draft, {
-    vendorOption: { fast: true },
     id: "renamed",
     api: "openai-completions",
     baseUrl: "https://model.example/v1",
@@ -76,8 +76,9 @@ test("builds a complete model draft and keeps hidden API fields", () => {
     cost: { input: 1.25 },
     samplingParams: { temperature: 0.7 },
     headers: { "x-model-route": "fast" },
-    __piSwitchReplaceDocument: true,
-    __piSwitchOriginalId: "old-id"
+    extraFieldsJson: '{"vendorOption":{"fast":true}}',
+    replaceDocument: true,
+    originalId: "old-id"
   });
 });
 
@@ -86,17 +87,53 @@ test("preserves unknown nested fields and unknown compat enum values", () => {
     originalModel: {
       thinkingLevelMap: { future: "ultra" },
       cost: { input: 1, vendorRate: 2 },
-      compat: { thinkingFormat: "future-format", vendorCompat: true }
+      compat: { thinkingFormat: "future-format" },
+      compatExtraFieldsJson: '{"vendorCompat":true}'
     },
     values: {
       modelCost_input: "1",
-      modelCompat_thinkingFormat: "__custom__"
+      modelCompat_thinkingFormat: "__custom__",
+      modelCompatExtraJson: '{"vendorCompat":true}'
     }
   }));
 
   assert.deepEqual(draft.thinkingLevelMap, { future: "ultra" });
   assert.deepEqual(draft.cost, { vendorRate: 2, input: 1 });
-  assert.deepEqual(draft.compat, { vendorCompat: true, thinkingFormat: "future-format" });
+  assert.deepEqual(draft.compat, { thinkingFormat: "future-format" });
+  assert.equal(draft.compatExtraFieldsJson, '{"vendorCompat":true}');
+});
+
+test("preserves editable future compat fields alongside structured fields", () => {
+  const draft = readModelDraft(form({
+    originalModel: {
+      compat: {
+        supportsDeveloperRole: false,
+        supportsThinkingTokenBudget: true
+      },
+      compatExtraFieldsJson: '{"vendorCompat":{"mode":"future"}}'
+    },
+    values: {
+      modelCompat_supportsDeveloperRole: "false",
+      modelCompat_supportsThinkingTokenBudget: "true",
+      modelCompatExtraJson: '{"vendorCompat":{"mode":"updated"}}'
+    }
+  }));
+
+  assert.deepEqual(draft.compat, {
+    supportsDeveloperRole: false,
+    supportsThinkingTokenBudget: true
+  });
+  assert.equal(draft.compatExtraFieldsJson, '{"vendorCompat":{"mode":"updated"}}');
+});
+
+test("clearing future compat JSON removes those fields", () => {
+  const draft = readModelDraft(form({
+    originalModel: { compatExtraFieldsJson: '{"vendorCompat":true}' },
+    values: { modelCompatExtraJson: "" }
+  }));
+
+  assert.equal(draft.compat, undefined);
+  assert.equal(draft.compatExtraFieldsJson, undefined);
 });
 
 test("does not expand a partial cost object to four zero fields", () => {
@@ -125,7 +162,15 @@ test("validates JSON object fields and header values", () => {
 test("validates integers, JSON syntax, and complete cost tiers", () => {
   assert.equal(
     errorMessage(() => readModelDraft(form({ values: { modelContextWindow: "12.5" } }))),
-    "上下文窗口 必须是非负整数"
+    "上下文窗口 必须是正整数"
+  );
+  assert.equal(
+    errorMessage(() => readModelDraft(form({ values: { modelContextWindow: "0" } }))),
+    "上下文窗口 必须是正整数"
+  );
+  assert.equal(
+    errorMessage(() => readModelDraft(form({ values: { modelMaxTokens: "0" } }))),
+    "最大输出 必须是正整数"
   );
   assert.equal(
     errorMessage(() => readModelDraft(form({ values: { modelExtraJson: "{" } }))),
@@ -146,16 +191,12 @@ test("requires a provider value for custom thinking levels", () => {
   );
 });
 
-test("filters known and UI-only fields from the extra JSON editor", () => {
-  assert.deepEqual(modelExtraFields({
-    id: "demo",
-    name: "Demo",
-    compat: {},
-    selected: true,
-    extraFields: { legacy: true },
-    vendorOption: 1
-  }), {
-    legacy: true,
-    vendorOption: 1
-  });
+test("keeps raw large integers as text in unknown field envelopes", () => {
+  const raw = '{"vendorId":9007199254740993}';
+  const draft = readModelDraft(form({
+    originalModel: { extraFieldsJson: raw },
+    values: { modelExtraJson: raw }
+  }));
+
+  assert.equal(draft.extraFieldsJson, raw);
 });

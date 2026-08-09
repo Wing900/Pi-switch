@@ -10,34 +10,34 @@ export function CheckEnvVar(arg1:string):Promise<system.EnvCheckResult>;
 
 export function CheckForUpdate():Promise<updater.CheckResult>;
 
-export function CreateProvider(arg1:provider.Config):Promise<void>;
+export function CreateProvider(arg1:provider.ConfigTransport):Promise<provider.ConfigTransport>;
 
 export function DeleteProvider(arg1:string):Promise<void>;
 
 export function ExecuteLaunchPi(arg1:string,arg2:string):Promise<void>;
 
-export function FetchModels(arg1:string):Promise<Array<provider.ModelInfo>>;
+export function FetchModels(arg1:string):Promise<Array<provider.ModelTransport>>;
 
 export function GetAppState():Promise<config.AppState>;
 
-export function ImportModels(arg1:string,arg2:Array<provider.ModelInfo>):Promise<void>;
+export function ImportModels(arg1:string,arg2:Array<provider.ModelTransport>):Promise<void>;
 
 export function InstallUpdate():Promise<void>;
 
 export function LaunchPi(arg1:string,arg2:string):Promise<pi.LaunchPreview>;
 
-export function ListProviders():Promise<Array<provider.Config>>;
+export function ListProviders():Promise<Array<provider.ConfigTransport>>;
 
 export function MarkUpdateChecked():Promise<void>;
 
 export function OpenConfigFolder():Promise<void>;
 
-export function ReplaceModels(arg1:string,arg2:Array<provider.ModelInfo>):Promise<void>;
+export function ReplaceModels(arg1:string,arg2:Array<provider.ModelTransport>,arg3:string):Promise<provider.ModelListTransport>;
 
 export function SetDefaultModel(arg1:string,arg2:string):Promise<void>;
 
 export function TestConnection(arg1:string):Promise<provider.ConnectionTestResult>;
 
-export function UpdateProvider(arg1:string,arg2:provider.Config):Promise<void>;
+export function UpdateProvider(arg1:string,arg2:provider.ConfigTransport):Promise<void>;
 
 export function UpdateSettings(arg1:config.AppSettings):Promise<void>;
