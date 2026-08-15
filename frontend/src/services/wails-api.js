@@ -51,8 +51,8 @@ export class WailsApi {
     return ImportModels(providerId, models);
   }
 
-  async replaceModels(providerId, models) {
-    return ReplaceModels(providerId, models);
+  async replaceModels(providerId, models, expectedRevision = "") {
+    return ReplaceModels(providerId, models, expectedRevision);
   }
 
   async setDefaultModel(providerId, modelId) {

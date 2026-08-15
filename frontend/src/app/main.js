@@ -151,7 +151,7 @@ const clickActions = {
   "data-import-models": providerActions.importModels,
   "data-toggle-model-selection-all": providerActions.toggleAllModelSelections,
   "data-open-manual-model": providerActions.openManualModel,
-  "data-import-manual-model": providerActions.importManualModel,
+  "data-save-model": providerActions.saveModelEditor,
   "data-delete-provider": confirmProviderDeletion,
   "data-set-default": appActions.setDefault,
   "data-launch-pi": appActions.directLaunch,
@@ -181,6 +181,8 @@ function bindClickEvents() {
 
     if (target.dataset.providerId) return selectProvider(target.dataset.providerId);
     if (target.dataset.selectModel) return selectModel(target.dataset.selectModel);
+    if (target.dataset.editModel) return providerActions.openModelEditor(target.dataset.editModel);
+    if (target.hasAttribute("data-add-model")) return providerActions.openModelEditor();
     if (target.dataset.deleteModel) return providerActions.deleteModel(target.dataset.deleteModel);
     if (target.dataset.setHeaderMode) return providerActions.setHeaderMode(target.dataset.setHeaderMode);
     if (target.dataset.openProviderSettings) return openProvider(target.dataset.openProviderSettings);
@@ -188,13 +190,29 @@ function bindClickEvents() {
     if (target.dataset.confirmDeleteProvider) return providerActions.remove(target.dataset.confirmDeleteProvider);
 
     const attribute = findActionAttribute(target);
-    if (attribute) await clickActions[attribute]();
+    if (attribute) {
+      try {
+        await clickActions[attribute]();
+      } catch (error) {
+        feedback.showError("操作失败", error);
+      }
+    }
   });
 }
 
 function bindFormEvents() {
   root.addEventListener("change", async (event) => {
     const target = event.target;
+    if (target.matches("[data-model-thinking-mode]")) {
+      const level = target.name.replace("modelThinkingMode_", "");
+      const valueInput = root.querySelector(`[name="modelThinkingValue_${level}"]`);
+      if (valueInput) {
+        valueInput.disabled = target.value !== "custom";
+        if (target.value !== "custom") valueInput.value = "";
+      }
+      return;
+    }
+
     if (target.matches("[data-model-id]")) {
       providerActions.syncToggleAllButton();
       return;

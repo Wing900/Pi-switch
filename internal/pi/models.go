@@ -1,8 +1,11 @@
 package pi
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -119,24 +122,35 @@ func DeleteProvider(path string, providerID string) error {
 }
 
 func MergeModels(path string, providerID string, incoming []provider.ModelInfo) ([]provider.ModelInfo, error) {
-	var result []provider.ModelInfo
-	err := mutateProviderModels(path, providerID, func(existing []provider.ModelInfo) []provider.ModelInfo {
-		result = provider.MergeModels(existing, incoming)
-		return result
-	})
-	return result, err
+	return mutateProviderModels(path, providerID, func(existing []provider.ModelInfo) ([]provider.ModelInfo, error) {
+		return provider.MergeModels(existing, incoming), nil
+	}, modelDocumentMergeIncremental)
 }
 
-func ReplaceModels(path string, providerID string, models []provider.ModelInfo) ([]provider.ModelInfo, error) {
+func ReplaceModels(path string, providerID string, models []provider.ModelInfo, expectedRevisions ...string) ([]provider.ModelInfo, error) {
 	result := provider.NormalizeModels(models)
-	err := mutateProviderModels(path, providerID, func([]provider.ModelInfo) []provider.ModelInfo {
-		return result
-	})
-	return result, err
+	expectedRevision := ""
+	if len(expectedRevisions) > 0 {
+		expectedRevision = expectedRevisions[0]
+	}
+	return mutateProviderModels(path, providerID, func(existing []provider.ModelInfo) ([]provider.ModelInfo, error) {
+		if expectedRevision != "" && provider.ModelListRevision(existing) != expectedRevision {
+			return nil, errors.New("模型列表已被外部修改，请重新打开编辑器")
+		}
+		return result, nil
+	}, modelDocumentReplaceList)
 }
 
-func mutateProviderModels(path string, providerID string, mutate func([]provider.ModelInfo) []provider.ModelInfo) error {
-	return mutateJSONDocument(path, func(payload map[string]json.RawMessage) error {
+type modelDocumentMergeMode int
+
+const (
+	modelDocumentMergeIncremental modelDocumentMergeMode = iota
+	modelDocumentReplaceList
+)
+
+func mutateProviderModels(path string, providerID string, mutate func([]provider.ModelInfo) ([]provider.ModelInfo, error), mode modelDocumentMergeMode) ([]provider.ModelInfo, error) {
+	var persisted []provider.ModelInfo
+	err := mutateJSONDocument(path, func(payload map[string]json.RawMessage) error {
 		providers, err := decodeProviders(payload)
 		if err != nil {
 			return err
@@ -154,18 +168,27 @@ func mutateProviderModels(path string, providerID string, mutate func([]provider
 		if err != nil {
 			return err
 		}
-		nextModels := provider.NormalizeModels(mutate(existingModels))
-		mergedModels, err := mergeModelDocuments(fields["models"], nextModels)
+		next, err := mutate(existingModels)
+		if err != nil {
+			return err
+		}
+		nextModels := provider.NormalizeModels(next)
+		mergedModels, err := mergeModelDocuments(fields["models"], nextModels, mode)
 		if err != nil {
 			return err
 		}
 		fields["models"] = mergedModels
+		persisted, err = decodeModels(mergedModels)
+		if err != nil {
+			return err
+		}
 		providers[providerID], err = json.Marshal(fields)
 		if err != nil {
 			return err
 		}
 		return encodeProviders(payload, providers)
 	})
+	return persisted, err
 }
 
 func decodeProviders(payload map[string]json.RawMessage) (map[string]json.RawMessage, error) {
@@ -212,7 +235,7 @@ func mergeProviderDocument(existing json.RawMessage, cfg provider.Config, includ
 		return nil, err
 	}
 	if includeModels {
-		models, err := mergeModelDocuments(fields["models"], cfg.Models)
+		models, err := mergeModelDocuments(fields["models"], cfg.Models, modelDocumentReplaceList)
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +244,12 @@ func mergeProviderDocument(existing json.RawMessage, cfg provider.Config, includ
 	return json.Marshal(fields)
 }
 
-func mergeModelDocuments(existing json.RawMessage, models []provider.ModelInfo) (json.RawMessage, error) {
+var knownModelDocumentFields = map[string]struct{}{
+	"id": {}, "name": {}, "api": {}, "baseUrl": {}, "reasoning": {}, "thinkingLevelMap": {}, "input": {},
+	"cost": {}, "contextWindow": {}, "maxTokens": {}, "samplingParams": {}, "headers": {}, "compat": {},
+}
+
+func mergeModelDocuments(existing json.RawMessage, models []provider.ModelInfo, mode modelDocumentMergeMode) (json.RawMessage, error) {
 	existingByID := map[string]map[string]json.RawMessage{}
 	if len(existing) > 0 {
 		var rawModels []json.RawMessage
@@ -251,8 +279,33 @@ func mergeModelDocuments(existing json.RawMessage, models []provider.ModelInfo) 
 		if err := json.Unmarshal(encodedModel, &nextFields); err != nil {
 			return nil, err
 		}
-		if oldFields := existingByID[model.ID]; oldFields != nil {
+		delete(nextFields, "selected")
+		replaceDocument := model.ReplaceDocument
+		originalID := strings.TrimSpace(model.OriginalID)
+		oldFields := existingByID[model.ID]
+		if oldFields == nil && originalID != "" {
+			oldFields = existingByID[originalID]
+		}
+		if model.Revision != "" {
+			if oldFields == nil || modelDocumentRevision(oldFields) != model.Revision {
+				return nil, fmt.Errorf("模型 %s 已被外部修改，请重新打开编辑器", model.ID)
+			}
+		}
+		if !replaceDocument && oldFields != nil {
+			if rawCompat, ok := oldFields["compat"]; ok {
+				if err := mergeCompatFields(nextFields, rawCompat, mode == modelDocumentMergeIncremental); err != nil {
+					return nil, err
+				}
+			}
 			for key, value := range oldFields {
+				if key == "selected" {
+					continue
+				}
+				if mode == modelDocumentReplaceList {
+					if _, known := knownModelDocumentFields[key]; known {
+						continue
+					}
+				}
 				if _, exists := nextFields[key]; !exists {
 					nextFields[key] = value
 				}
@@ -265,6 +318,46 @@ func mergeModelDocuments(existing json.RawMessage, models []provider.ModelInfo) 
 		merged = append(merged, mergedModel)
 	}
 	return json.Marshal(merged)
+}
+
+func mergeCompatFields(modelFields map[string]json.RawMessage, existingCompat json.RawMessage, preserveKnown bool) error {
+	oldFields := map[string]json.RawMessage{}
+	if err := json.Unmarshal(existingCompat, &oldFields); err != nil {
+		return err
+	}
+	compatFields := map[string]json.RawMessage{}
+	if rawCompat, ok := modelFields["compat"]; ok {
+		if err := json.Unmarshal(rawCompat, &compatFields); err != nil {
+			return err
+		}
+	}
+	for field, value := range oldFields {
+		if !preserveKnown && provider.IsTransportCompatField(field) {
+			continue
+		}
+		if _, exists := compatFields[field]; !exists {
+			compatFields[field] = value
+		}
+	}
+	if len(compatFields) == 0 {
+		delete(modelFields, "compat")
+		return nil
+	}
+	encoded, err := json.Marshal(compatFields)
+	if err != nil {
+		return err
+	}
+	modelFields["compat"] = encoded
+	return nil
+}
+
+func modelDocumentRevision(fields map[string]json.RawMessage) string {
+	encoded, err := json.Marshal(fields)
+	if err != nil {
+		return ""
+	}
+	hash := sha256.Sum256(encoded)
+	return hex.EncodeToString(hash[:])
 }
 
 func decodeModels(raw json.RawMessage) ([]provider.ModelInfo, error) {

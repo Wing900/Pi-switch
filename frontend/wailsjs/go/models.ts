@@ -30,7 +30,7 @@ export namespace config {
 	}
 	export class AppState {
 	    version: string;
-	    providers: provider.Config[];
+	    providers: provider.ConfigTransport[];
 	    selectedProviderId: string;
 	    defaultProviderId: string;
 	    defaultModelId: string;
@@ -44,7 +44,7 @@ export namespace config {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.version = source["version"];
-	        this.providers = this.convertValues(source["providers"], provider.Config);
+	        this.providers = this.convertValues(source["providers"], provider.ConfigTransport);
 	        this.selectedProviderId = source["selectedProviderId"];
 	        this.defaultProviderId = source["defaultProviderId"];
 	        this.defaultModelId = source["defaultModelId"];
@@ -94,27 +94,53 @@ export namespace pi {
 
 export namespace provider {
 	
-	export class ModelInfo {
+	export class ModelTransport {
 	    id: string;
 	    name: string;
+	    api?: string;
+	    baseUrl?: string;
 	    reasoning: boolean;
+	    thinkingLevelMap?: Record<string, any>;
+	    input?: string[];
+	    cost?: Record<string, any>;
 	    contextWindow?: number;
 	    maxTokens?: number;
+	    samplingParams?: Record<string, any>;
+	    headers?: Record<string, string>;
+	    compat?: Record<string, any>;
+	    compatExtraFieldsJson?: string;
+	    extraFieldsJson?: string;
+	    revision?: string;
+	    replaceDocument?: boolean;
+	    originalId?: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new ModelInfo(source);
+	        return new ModelTransport(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
+	        this.api = source["api"];
+	        this.baseUrl = source["baseUrl"];
 	        this.reasoning = source["reasoning"];
+	        this.thinkingLevelMap = source["thinkingLevelMap"];
+	        this.input = source["input"];
+	        this.cost = source["cost"];
 	        this.contextWindow = source["contextWindow"];
 	        this.maxTokens = source["maxTokens"];
+	        this.samplingParams = source["samplingParams"];
+	        this.headers = source["headers"];
+	        this.compat = source["compat"];
+	        this.compatExtraFieldsJson = source["compatExtraFieldsJson"];
+	        this.extraFieldsJson = source["extraFieldsJson"];
+	        this.revision = source["revision"];
+	        this.replaceDocument = source["replaceDocument"];
+	        this.originalId = source["originalId"];
 	    }
 	}
-	export class Config {
+	export class ConfigTransport {
 	    id: string;
 	    name: string;
 	    type: string;
@@ -126,12 +152,14 @@ export namespace provider {
 	    headerMode: string;
 	    headers: Record<string, string>;
 	    customHeaders?: Record<string, string>;
-	    models: ModelInfo[];
+	    models: ModelTransport[];
 	    host: string;
 	    selectedModelId: string;
+	    extraFieldsJson?: string;
+	    modelsRevision?: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new Config(source);
+	        return new ConfigTransport(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -147,9 +175,11 @@ export namespace provider {
 	        this.headerMode = source["headerMode"];
 	        this.headers = source["headers"];
 	        this.customHeaders = source["customHeaders"];
-	        this.models = this.convertValues(source["models"], ModelInfo);
+	        this.models = this.convertValues(source["models"], ModelTransport);
 	        this.host = source["host"];
 	        this.selectedModelId = source["selectedModelId"];
+	        this.extraFieldsJson = source["extraFieldsJson"];
+	        this.modelsRevision = source["modelsRevision"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -185,6 +215,38 @@ export namespace provider {
 	        this.title = source["title"];
 	        this.lines = source["lines"];
 	    }
+	}
+	export class ModelListTransport {
+	    models: ModelTransport[];
+	    revision: string;
+
+	    static createFrom(source: any = {}) {
+	        return new ModelListTransport(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.models = this.convertValues(source["models"], ModelTransport);
+	        this.revision = source["revision"];
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

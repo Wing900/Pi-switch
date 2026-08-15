@@ -138,40 +138,70 @@ func (c *Coordinator) MergeModels(providerID string, models []provider.ModelInfo
 	return c.saveAppConfig(cfg)
 }
 
-func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelInfo) error {
+func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelInfo, expectedRevisions ...string) ([]provider.ModelInfo, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	renames := modelRenames(models)
+
 	cfg, current, err := c.providerState(providerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defaults, err := pi.ReadDefaults(cfg.Settings.PiSettingsPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	replaced, err := pi.ReplaceModels(cfg.Settings.PiModelsPath, providerID, models)
+	replaced, err := pi.ReplaceModels(cfg.Settings.PiModelsPath, providerID, models, expectedRevisions...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	c.wrote(cfg.Settings.PiModelsPath)
 	current.Models = replaced
+	if renamedID := renames[current.SelectedModelID]; renamedID != "" {
+		current.SelectedModelID = renamedID
+	}
 	current = provider.Normalize(current)
+	if !providerHasModel(current, current.SelectedModelID) {
+		if len(replaced) > 0 {
+			current.SelectedModelID = replaced[0].ID
+		} else {
+			current.SelectedModelID = ""
+		}
+	}
 	cfg.UpsertProvider(current, providerID)
 
-	defaultRemoved := defaults.DefaultProvider == providerID && defaults.DefaultModel != "" && provider.EnsureModel(current, defaults.DefaultModel) != nil
+	defaultModelID := defaults.DefaultModel
+	if defaults.DefaultProvider == providerID {
+		if renamedID := renames[defaultModelID]; renamedID != "" {
+			defaultModelID = renamedID
+			if err := pi.PatchDefaults(cfg.Settings.PiSettingsPath, pi.DefaultPatch{DefaultModel: stringPointer(defaultModelID)}); err != nil {
+				return nil, err
+			}
+			c.wrote(cfg.Settings.PiSettingsPath)
+		}
+	}
+	defaultRemoved := defaults.DefaultProvider == providerID && defaultModelID != "" && provider.EnsureModel(current, defaultModelID) != nil
 	if defaultRemoved {
 		empty := ""
 		if err := pi.PatchDefaults(cfg.Settings.PiSettingsPath, pi.DefaultPatch{DefaultModel: &empty}); err != nil {
-			return err
+			return nil, err
 		}
 		c.wrote(cfg.Settings.PiSettingsPath)
 	}
-	if cfg.Settings.LastDefaultProviderID == providerID && provider.EnsureModel(current, cfg.Settings.LastDefaultModelID) != nil {
-		cfg.Settings.LastDefaultModelID = ""
+	if cfg.Settings.LastDefaultProviderID == providerID {
+		if renamedID := renames[cfg.Settings.LastDefaultModelID]; renamedID != "" {
+			cfg.Settings.LastDefaultModelID = renamedID
+		}
+		if provider.EnsureModel(current, cfg.Settings.LastDefaultModelID) != nil {
+			cfg.Settings.LastDefaultModelID = ""
+		}
 	}
-	return c.saveAppConfig(cfg)
+	if err := c.saveAppConfig(cfg); err != nil {
+		return nil, err
+	}
+	return replaced, nil
 }
 
 func (c *Coordinator) SetDefault(providerID string, modelID string) error {
@@ -198,6 +228,29 @@ func (c *Coordinator) SetDefault(providerID string, modelID string) error {
 	cfg.Settings.LastDefaultProviderID = providerID
 	cfg.Settings.LastDefaultModelID = modelID
 	return c.saveAppConfig(cfg)
+}
+
+func modelRenames(models []provider.ModelInfo) map[string]string {
+	renames := map[string]string{}
+	for index := range models {
+		oldID := models[index].OriginalID
+		if oldID != "" && oldID != models[index].ID {
+			renames[oldID] = models[index].ID
+		}
+	}
+	return renames
+}
+
+func providerHasModel(cfg provider.Config, modelID string) bool {
+	if modelID == "" {
+		return false
+	}
+	for _, model := range cfg.Models {
+		if model.ID == modelID {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Coordinator) UpdateSettings(input config.AppSettings) error {

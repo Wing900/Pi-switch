@@ -31,13 +31,13 @@ type SwitchConfig struct {
 }
 
 type AppState struct {
-	Version            string            `json:"version"`
-	Providers          []provider.Config `json:"providers"`
-	SelectedProviderID string            `json:"selectedProviderId"`
-	DefaultProviderID  string            `json:"defaultProviderId"`
-	DefaultModelID     string            `json:"defaultModelId"`
-	Settings           AppSettings       `json:"settings"`
-	Logs               []string          `json:"logs"`
+	Version            string                     `json:"version"`
+	Providers          []provider.ConfigTransport `json:"providers"`
+	SelectedProviderID string                     `json:"selectedProviderId"`
+	DefaultProviderID  string                     `json:"defaultProviderId"`
+	DefaultModelID     string                     `json:"defaultModelId"`
+	Settings           AppSettings                `json:"settings"`
+	Logs               []string                   `json:"logs"`
 }
 
 type Service struct {
