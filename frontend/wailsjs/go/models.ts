@@ -315,6 +315,26 @@ export namespace wsl {
 	        this.distros = source["distros"];
 	    }
 	}
+	export class PiConfigDocuments {
+	    distro: string;
+	    settingsExists: boolean;
+	    modelsExists: boolean;
+	    settingsJson: string;
+	    modelsJson: string;
+
+	    static createFrom(source: any = {}) {
+	        return new PiConfigDocuments(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.distro = source["distro"];
+	        this.settingsExists = source["settingsExists"];
+	        this.modelsExists = source["modelsExists"];
+	        this.settingsJson = source["settingsJson"];
+	        this.modelsJson = source["modelsJson"];
+	    }
+	}
 	export class PiDetection {
 	    distro: string;
 	    home: string;
