@@ -20,6 +20,7 @@ import (
 	"piswitch/internal/provider"
 	"piswitch/internal/system"
 	"piswitch/internal/updater"
+	"piswitch/internal/wsl"
 )
 
 const appVersion = "0.0.0.14"
@@ -240,6 +241,14 @@ func (a *App) GetAppState() (config.AppState, error) {
 		Settings:           cfg.Settings,
 		Logs:               logs,
 	}, nil
+}
+
+func (a *App) GetWSLDetection() (wsl.Detection, error) {
+	return wsl.Detect()
+}
+
+func (a *App) GetWSLPiDetection(distro string) (wsl.PiDetection, error) {
+	return wsl.DetectPi(distro)
 }
 
 func (a *App) ListProviders() ([]provider.Config, error) {
