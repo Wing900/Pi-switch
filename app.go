@@ -23,7 +23,7 @@ import (
 	"piswitch/internal/wsl"
 )
 
-const appVersion = "0.0.0.14"
+const appVersion = "0.0.0.15"
 
 const configChangedEvent = "pi:config-changed"
 const updateAvailableEvent = "pi:update-available"
