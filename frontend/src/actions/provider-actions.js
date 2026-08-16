@@ -102,6 +102,31 @@ function syncDefaultModelState(state, providerId, models, { oldId = "", newId = 
 export function createProviderActions({ root, api, store, providerForm, feedback }) {
   let headerSaveTimer = null;
 
+  async function persistProviderModels(providerId, models, expectedRevision = "", { modal = null } = {}) {
+    const result = await api.replaceModels(providerId, models, expectedRevision);
+    const { models: persistedModels, revision } = modelListResult(result, models, expectedRevision);
+    store.setState((state) => {
+      const nextState = {
+        ...state,
+        providers: state.providers.map((provider) => {
+          if (provider.id !== providerId) return provider;
+          const selectedModelId = persistedModels.some((model) => model.id === provider.selectedModelId)
+            ? provider.selectedModelId
+            : persistedModels[0]?.id ?? "";
+          return { ...provider, models: persistedModels, modelsRevision: revision, selectedModelId };
+        }),
+        modal
+      };
+      return syncDefaultModelState(nextState, providerId, persistedModels);
+    });
+    return persistedModels;
+  }
+
+  async function mergeProviderModels(provider, incoming, { modal = null } = {}) {
+    const merged = mergeModels(provider.models, incoming);
+    return persistProviderModels(provider.id, merged, provider.modelsRevision || "", { modal });
+  }
+
   function refreshHeaderModeUI(mode) {
     root.querySelectorAll("[data-set-header-mode]").forEach((button) => {
       button.classList.toggle("is-active", button.dataset.setHeaderMode === mode);
@@ -296,26 +321,30 @@ export function createProviderActions({ root, api, store, providerForm, feedback
       })
       .filter(Boolean);
 
+    if (selected.length === 0) {
+      feedback.showError("保存模型失败", new Error("请至少选择一个模型"));
+      return;
+    }
+
     try {
-      const result = await api.replaceModels(modal.payload.providerId, selected, modal.payload.modelsRevision || "");
-      const { models: nextModels, revision } = modelListResult(result, selected, modal.payload.modelsRevision || "");
-      store.setState((state) => {
-        const nextState = {
-          ...state,
-          providers: state.providers.map((provider) => {
-            if (provider.id !== modal.payload.providerId) return provider;
-            const selectedModelId =
-              nextModels.some((model) => model.id === provider.selectedModelId)
-                ? provider.selectedModelId
-                : nextModels[0]?.id ?? "";
-            return { ...provider, models: nextModels, modelsRevision: revision, selectedModelId };
-          }),
-          modal: null
-        };
-        return syncDefaultModelState(nextState, modal.payload.providerId, nextModels);
-      });
+      const persisted = await mergeProviderModels(
+        provider,
+        selected,
+        {
+          modal: {
+            kind: "operation-result",
+            payload: {
+              status: "success",
+              title: "所选模型已保存",
+              message: `已导入 ${selected.length} 个模型，当前共 ${mergeModels(provider.models, selected).length} 个。`,
+              details: ["模型列表已同步写入 Pi models.json 和 Pi Switch 本地配置。"]
+            }
+          }
+        }
+      );
+      return persisted;
     } catch (error) {
-      feedback.showError("导入模型失败", error);
+      feedback.showError("保存模型失败", error);
     }
   }
 

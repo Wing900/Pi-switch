@@ -128,6 +128,10 @@ func (c *Coordinator) MergeModels(providerID string, models []provider.ModelInfo
 	if err != nil {
 		return err
 	}
+	if err := pi.UpsertProvider(cfg.Settings.PiModelsPath, current, providerID); err != nil {
+		return err
+	}
+	c.wrote(cfg.Settings.PiModelsPath)
 	merged, err := pi.MergeModels(cfg.Settings.PiModelsPath, providerID, models)
 	if err != nil {
 		return err
@@ -152,6 +156,10 @@ func (c *Coordinator) ReplaceModels(providerID string, models []provider.ModelIn
 	if err != nil {
 		return nil, err
 	}
+	if err := pi.UpsertProvider(cfg.Settings.PiModelsPath, current, providerID); err != nil {
+		return nil, err
+	}
+	c.wrote(cfg.Settings.PiModelsPath)
 
 	replaced, err := pi.ReplaceModels(cfg.Settings.PiModelsPath, providerID, models, expectedRevisions...)
 	if err != nil {

@@ -13,7 +13,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.14",
+  version: "0.0.0.17",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",

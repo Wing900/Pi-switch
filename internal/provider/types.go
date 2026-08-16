@@ -474,6 +474,9 @@ func Normalize(input Config) Config {
 	input.BaseURL = strings.TrimRight(strings.TrimSpace(input.BaseURL), "/")
 	input.APIKeyEnv = strings.TrimSpace(input.APIKeyEnv)
 	input.APIKeyLiteral = strings.TrimSpace(input.APIKeyLiteral)
+	if input.APIKeyLiteral != "" {
+		input.APIKeyEnv = ""
+	}
 	input.API = strings.TrimSpace(input.API)
 	input.HeaderMode = strings.TrimSpace(input.HeaderMode)
 	input.Models = NormalizeModels(input.Models)

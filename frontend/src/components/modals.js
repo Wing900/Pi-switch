@@ -101,7 +101,7 @@ function fetchModelsModal(payload) {
     actions: `
       <button class="text-button modal-footer__manual-action" data-toggle-model-selection-all>${allSelected ? "全不选" : "全选"}</button>
       <button class="text-button" data-close-modal>取消</button>
-      <button class="text-button text-button--accent" data-import-models>导入所选模型</button>
+      <button class="text-button text-button--accent" data-import-models>保存所选模型</button>
     `
   });
 }
