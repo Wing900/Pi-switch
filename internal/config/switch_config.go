@@ -251,8 +251,12 @@ func syncPiProviders(current []provider.Config, imported []provider.Config) []pr
 		if currentProvider, exists := currentByID[incoming.ID]; exists {
 			currentProvider.BaseURL = incoming.BaseURL
 			currentProvider.API = incoming.API
-			currentProvider.APIKeyEnv = incoming.APIKeyEnv
-			currentProvider.APIKeyLiteral = incoming.APIKeyLiteral
+			if incoming.APIKeyLiteral != "" {
+				currentProvider.APIKeyLiteral = incoming.APIKeyLiteral
+				currentProvider.APIKeyEnv = ""
+			} else if currentProvider.APIKeyLiteral == "" {
+				currentProvider.APIKeyEnv = incoming.APIKeyEnv
+			}
 			currentProvider.Headers = incoming.Headers
 			currentProvider.Models = incoming.Models
 			currentProvider.Host = incoming.Host

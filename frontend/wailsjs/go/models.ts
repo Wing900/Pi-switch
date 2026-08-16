@@ -219,17 +219,17 @@ export namespace provider {
 	export class ModelListTransport {
 	    models: ModelTransport[];
 	    revision: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ModelListTransport(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.models = this.convertValues(source["models"], ModelTransport);
 	        this.revision = source["revision"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -300,15 +300,15 @@ export namespace updater {
 }
 
 export namespace wsl {
-
+	
 	export class Detection {
 	    detected: boolean;
 	    distros: string[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Detection(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.detected = source["detected"];
@@ -324,11 +324,11 @@ export namespace wsl {
 	    piHomeExists: boolean;
 	    settingsExists: boolean;
 	    modelsExists: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new PiDetection(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.distro = source["distro"];

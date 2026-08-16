@@ -306,14 +306,14 @@ func (a *App) TestConnection(id string) (provider.ConnectionTestResult, error) {
 	}
 
 	key, envResult := system.ResolveAPIKey(current.APIKeyEnv, current.APIKeyLiteral)
-	if current.APIKeyEnv != "" && !envResult.Found {
+	if !envResult.Found {
 		return provider.ConnectionTestResult{
 			OK:    false,
 			Title: "连接测试失败",
 			Lines: []string{
 				"状态：失败",
-				"问题：API Key 环境变量不存在",
-				"修复：请先设置系统环境变量并重新打开 Pi Switch",
+				"问题：API Key 未填写",
+				"修复：请在 Provider 配置中填写 API 密钥后重试",
 			},
 		}, nil
 	}
@@ -361,8 +361,8 @@ func (a *App) FetchModels(id string) ([]provider.ModelTransport, error) {
 		return nil, err
 	}
 	key, envResult := system.ResolveAPIKey(current.APIKeyEnv, current.APIKeyLiteral)
-	if current.APIKeyEnv != "" && !envResult.Found {
-		return nil, errors.New("环境变量 " + current.APIKeyEnv + " 不存在")
+	if !envResult.Found {
+		return nil, errors.New("API Key 未填写")
 	}
 	models, err := provider.FetchModelsByAPI(current, key)
 	if err != nil {

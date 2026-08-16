@@ -231,6 +231,14 @@ function bindFormEvents() {
     }
   });
 
+  root.addEventListener("focusout", async (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    if (!target.closest(".drawer")) return;
+    if (target.name !== "apiKeyLiteral") return;
+    await providerForm.commit({ showInvalidModal: false });
+  });
+
   root.addEventListener("input", (event) => {
     if (event.target.closest(".drawer") && event.target.matches("input[name]")) {
       providerForm.schedule();
