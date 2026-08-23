@@ -34,6 +34,10 @@ export function GetWSLDetection() {
   return window['go']['main']['App']['GetWSLDetection']();
 }
 
+export function GetWSLPiConfigDocuments(arg1) {
+  return window['go']['main']['App']['GetWSLPiConfigDocuments'](arg1);
+}
+
 export function GetWSLPiDetection(arg1) {
   return window['go']['main']['App']['GetWSLPiDetection'](arg1);
 }
