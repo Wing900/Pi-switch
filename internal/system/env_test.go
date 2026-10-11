@@ -15,12 +15,13 @@ func TestResolveAPIKey_EnvAbsent_LiteralFallback(t *testing.T) {
 	}
 }
 
-func TestResolveAPIKey_EnvPresent_UsesEnv(t *testing.T) {
+// 环境变量模式已停用：即使环境变量存在，也只使用本地保存的密钥。
+func TestResolveAPIKey_EnvPresent_LiteralWins(t *testing.T) {
 	os.Setenv("TEST_API_KEY", "sk-from-env")
 	defer os.Unsetenv("TEST_API_KEY")
 	key, result := system.ResolveAPIKey("TEST_API_KEY", "test-key-from-ui")
-	if key != "sk-from-env" || !result.Found {
-		t.Errorf("key=%q found=%v, want 'sk-from-env', true", key, result.Found)
+	if key != "test-key-from-ui" || !result.Found {
+		t.Errorf("key=%q found=%v, want 'test-key-from-ui', true", key, result.Found)
 	}
 }
 

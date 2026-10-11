@@ -178,3 +178,109 @@ func TestConfigTransportPreservesProviderUnknownFields(t *testing.T) {
 		t.Fatalf("providerVendorId = %s", got)
 	}
 }
+
+func TestConfigProviderCompatIsStructuredAndRoundTrips(t *testing.T) {
+	var cfg Config
+	if err := json.Unmarshal([]byte(`{
+  "id":"demo",
+  "name":"Demo",
+  "compat":{"supportsStrictMode":true,"futureFlag":9007199254740993},
+  "models":[]
+}`), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if got := cfg.Compat["supportsStrictMode"]; got != true {
+		t.Fatalf("supportsStrictMode = %#v", got)
+	}
+	if _, leaked := cfg.Compat["futureFlag"]; leaked {
+		t.Fatal("unknown compat field leaked into structured compat")
+	}
+	if _, leaked := cfg.Extra["compat"]; leaked {
+		t.Fatal("provider compat leaked into unknown-provider fields")
+	}
+
+	encoded, err := json.Marshal(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(encoded, &fields); err != nil {
+		t.Fatal(err)
+	}
+	var compat map[string]json.RawMessage
+	if err := json.Unmarshal(fields["compat"], &compat); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(compat["supportsStrictMode"]); got != "true" {
+		t.Fatalf("supportsStrictMode = %s", got)
+	}
+	if got := string(compat["futureFlag"]); got != "9007199254740993" {
+		t.Fatalf("futureFlag = %s", got)
+	}
+}
+
+func TestConfigTransportExposesProviderCompat(t *testing.T) {
+	var cfg Config
+	if err := json.Unmarshal([]byte(`{
+  "id":"demo","name":"Demo","models":[],
+  "compat":{"supportsStrictMode":true,"futureFlag":9007199254740993}
+}`), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	transport, err := NewConfigTransport(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := transport.Compat["supportsStrictMode"]; got != true {
+		t.Fatalf("transport compat = %#v", transport.Compat)
+	}
+	if transport.CompatExtraFieldsJSON == "" {
+		t.Fatal("unknown provider compat field was not carried to transport")
+	}
+
+	roundTripped, err := transport.Config()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := roundTripped.Compat["supportsStrictMode"]; got != true {
+		t.Fatalf("round-trip structured compat = %#v", roundTripped.Compat)
+	}
+	encoded, err := json.Marshal(roundTripped)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(encoded, &fields); err != nil {
+		t.Fatal(err)
+	}
+	var compat map[string]json.RawMessage
+	if err := json.Unmarshal(fields["compat"], &compat); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(compat["futureFlag"]); got != "9007199254740993" {
+		t.Fatalf("futureFlag = %s", got)
+	}
+}
+
+func TestConfigProviderCompatSurvivesUnrelatedTransportEdit(t *testing.T) {
+	var cfg Config
+	if err := json.Unmarshal([]byte(`{
+  "id":"demo","name":"Demo","models":[],
+  "compat":{"supportsStrictMode":true}
+}`), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	transport, err := NewConfigTransport(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	transport.Name = "Renamed"
+	transport.BaseURL = "https://example.com/v1"
+	edited, err := transport.Config()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := edited.Compat["supportsStrictMode"]; got != true {
+		t.Fatalf("provider compat lost after unrelated edit: %#v", edited.Compat)
+	}
+}

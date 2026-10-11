@@ -13,7 +13,7 @@ import { transitionState } from "../ui/transitions.js";
 const root = document.querySelector("#app");
 const api = new WailsApi();
 const store = createStore({
-  version: "0.0.0.17",
+  version: "0.0.0.18",
   providers: [],
   selectedProviderId: "",
   defaultProviderId: "",
@@ -218,7 +218,7 @@ function bindFormEvents() {
       return;
     }
 
-    if (target.closest(".drawer") && target.matches("input[name], select[name]")) {
+    if (target.closest(".drawer") && target.matches("input[name], select[name], textarea[name]")) {
       providerForm.schedule();
       return;
     }
@@ -240,7 +240,7 @@ function bindFormEvents() {
   });
 
   root.addEventListener("input", (event) => {
-    if (event.target.closest(".drawer") && event.target.matches("input[name]")) {
+    if (event.target.closest(".drawer") && event.target.matches("input[name], textarea[name]")) {
       providerForm.schedule();
     }
     if (event.target.closest(".headers-editor") && event.target.matches("[data-header-name], [data-header-value]")) {

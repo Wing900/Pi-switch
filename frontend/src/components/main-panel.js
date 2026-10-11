@@ -27,10 +27,7 @@ export function renderMainPanel(state, provider) {
       </div>
 
       <div class="main-content">
-        <div class="provider-heading">
-          <span class="provider-heading__signal"></span>
-          <span>${escapeHtml(provider?.name ?? "未选择提供商")}</span>
-        </div>
+        <div class="provider-heading">${escapeHtml(provider?.name ?? "未选择提供商")}</div>
 
         <section class="launch-workspace">
           <span class="field-label">运行模型</span>
@@ -58,7 +55,7 @@ export function renderMainPanel(state, provider) {
                             aria-selected="${model.id === selectedModelId}"
                           >
                             <span>${escapeHtml(model.name)}</span>
-                            ${model.id === selectedModelId ? '<span aria-hidden="true">·</span>' : ""}
+                            ${model.id === selectedModelId ? '<span aria-hidden="true">✓</span>' : ""}
                           </button>
                         `
                       )
@@ -69,9 +66,8 @@ export function renderMainPanel(state, provider) {
           </div>
 
           <div class="launch-actions">
-            <button class="primary-action text-button text-button--accent" data-launch-pi ${provider && selectedModelId ? "" : "disabled"}>
-              <span>启动 Pi Agent</span>
-              <span aria-hidden="true">↗</span>
+            <button class="primary-action" data-launch-pi ${provider && selectedModelId ? "" : "disabled"}>
+              启动 Pi Agent
             </button>
             <button class="text-button" data-set-default ${selectedModelId ? "" : "disabled"}>设为默认模型</button>
           </div>
@@ -79,9 +75,9 @@ export function renderMainPanel(state, provider) {
         </section>
 
         <div class="default-summary">
-          <span>DEFAULT</span>
+          <span>默认</span>
           <strong>${escapeHtml(state.defaultProviderId || "—")} / ${escapeHtml(defaultModelText)}</strong>
-          ${defaultCw ? `<span class="default-summary__ctx">CONTEXT ${escapeHtml(defaultCw)}</span>` : ""}
+          ${defaultCw ? `<span class="default-summary__ctx">${escapeHtml(defaultCw)} 上下文</span>` : ""}
         </div>
       </div>
 

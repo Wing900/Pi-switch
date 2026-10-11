@@ -44,45 +44,101 @@ select:focus-visible {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
-  min-height: 38px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 4px;
+  min-height: var(--control-height);
+  padding: 7px var(--control-padding-x);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--control-radius);
   background: var(--color-input-bg);
   color: var(--ink);
-  font-size: 11px;
+  font-size: var(--text-body);
+  line-height: 1.4;
   outline: none;
-  transition: background-color 180ms ease, box-shadow 180ms ease;
+  transition: border-color 180ms var(--ease), background-color 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+
+textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-disabled);
 }
 
 input:hover,
-select:hover {
-  background: var(--color-hover-bg);
+select:hover,
+textarea:hover {
+  border-color: var(--line-strong);
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
+  border-color: var(--line-strong);
   background: var(--surface-raised);
   box-shadow: var(--shadow-input-focus);
 }
 
-.eyebrow {
-  font-family: var(--font-display);
-  font-size: 10px;
+/* 表单基本单元：抽屉 / 各种弹窗统一复用 */
+.form-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.form-field__label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-secondary);
+  font-size: var(--text-micro);
   font-weight: 600;
-  letter-spacing: 0.16em;
+}
+
+.form-textarea {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-micro);
+  line-height: 1.5;
+}
+
+.eyebrow {
+  font-size: var(--text-micro);
+  font-weight: 600;
   color: var(--accent);
+}
+
+/* 可悬浮的字段说明标记：替代常显的灰色小字。 */
+.field-hint {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  margin-left: 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-hover-bg);
+  color: var(--ink-muted);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.field-hint:hover {
+  background: var(--color-hover-bg);
+  color: var(--ink);
 }
 
 .text-button {
   position: relative;
   padding: 3px 0;
   color: var(--ink-secondary);
-  font-size: 12px;
+  font-size: var(--text-body);
   cursor: pointer;
-  transition: color 180ms ease;
+  transition: color 180ms var(--ease);
 }
 
 .text-button::after {
@@ -95,7 +151,7 @@ select:focus {
   background: currentColor;
   transform: scaleX(0);
   transform-origin: right center;
-  transition: transform 220ms var(--ease-out);
+  transition: transform 220ms var(--ease);
 }
 
 .text-button:hover {
@@ -132,7 +188,7 @@ select:focus {
   background: currentColor;
   transform: scaleX(0);
   transform-origin: right center;
-  transition: transform 220ms var(--ease-out);
+  transition: transform 220ms var(--ease);
 }
 
 .window-symbol:hover::after,

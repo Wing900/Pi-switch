@@ -1,6 +1,28 @@
 import { escapeHtml } from "./view-utils.js";
 import { COMPAT_BOOLEAN_FIELDS, COMPAT_ENUM_FIELDS, THINKING_LEVELS } from "../config/model-fields.js";
 
+// 字段说明不再常显，改为 hover/focus 的 title 提示与 "?" 标记，降低视觉密度。
+function hintMark(description) {
+  if (!description) {
+    return "";
+  }
+  return ` <span class="field-hint" title="${escapeHtml(description)}" aria-hidden="true">?</span>`;
+}
+
+function hintTitle(description) {
+  return description ? ` title="${escapeHtml(description)}"` : "";
+}
+
+// 当模型未显式设置 compat 时，展示从 Provider 继承的有效值，回答 issue #8 的“是否生效”。
+function compatSourceNote(providerCompat, name) {
+  const inherited = providerCompat?.[name];
+  if (inherited === undefined || inherited === null) {
+    return "";
+  }
+  const text = inherited === true ? "启用" : inherited === false ? "禁用" : String(inherited);
+  return `<span class="model-editor-compat-field__source">继承 Provider · ${escapeHtml(text)}</span>`;
+}
+
 function modalFrame({ tone = "", eyebrow = "", title, description = "", body = "", actions = "", wide = false, className = "" }) {
   return `
     <div class="modal-backdrop">
@@ -109,9 +131,8 @@ function fetchModelsModal(payload) {
 function modelTextField({ label, name, value = "", description = "", type = "text", step = "", min = "" }) {
   return `
     <label class="model-editor-field">
-      <span class="model-editor-field__label">${escapeHtml(label)}</span>
-      <input name="${escapeHtml(name)}" type="${type}" value="${escapeHtml(value)}" autocomplete="off" ${step ? `step="${step}"` : ""} ${min ? `min="${min}"` : ""}>
-      ${description ? `<small>${escapeHtml(description)}</small>` : ""}
+      <span class="model-editor-field__label">${escapeHtml(label)}${hintMark(description)}</span>
+      <input name="${escapeHtml(name)}" type="${type}" value="${escapeHtml(value)}" autocomplete="off" ${step ? `step="${step}"` : ""} ${min ? `min="${min}"` : ""}${hintTitle(description)}>
     </label>
   `;
 }
@@ -119,9 +140,8 @@ function modelTextField({ label, name, value = "", description = "", type = "tex
 function modelJsonField({ label, name, value, placeholder, description }) {
   return `
     <label class="model-editor-json-field">
-      <span class="model-editor-field__label">${escapeHtml(label)}</span>
-      <textarea name="${escapeHtml(name)}" spellcheck="false" autocomplete="off" placeholder="${escapeHtml(placeholder || "{}")}">${value ? escapeHtml(JSON.stringify(value, null, 2)) : ""}</textarea>
-      ${description ? `<small>${escapeHtml(description)}</small>` : ""}
+      <span class="model-editor-field__label">${escapeHtml(label)}${hintMark(description)}</span>
+      <textarea name="${escapeHtml(name)}" spellcheck="false" autocomplete="off" placeholder="${escapeHtml(placeholder || "{}")}"${hintTitle(description)}>${value ? escapeHtml(JSON.stringify(value, null, 2)) : ""}</textarea>
     </label>
   `;
 }
@@ -129,25 +149,24 @@ function modelJsonField({ label, name, value, placeholder, description }) {
 function modelRawJsonField({ label, name, value, placeholder, description }) {
   return `
     <label class="model-editor-json-field">
-      <span class="model-editor-field__label">${escapeHtml(label)}</span>
-      <textarea name="${escapeHtml(name)}" spellcheck="false" autocomplete="off" placeholder="${escapeHtml(placeholder || "{}")}">${value ? escapeHtml(value) : ""}</textarea>
-      ${description ? `<small>${escapeHtml(description)}</small>` : ""}
+      <span class="model-editor-field__label">${escapeHtml(label)}${hintMark(description)}</span>
+      <textarea name="${escapeHtml(name)}" spellcheck="false" autocomplete="off" placeholder="${escapeHtml(placeholder || "{}")}"${hintTitle(description)}>${value ? escapeHtml(value) : ""}</textarea>
     </label>
   `;
 }
 
-function modelTriStateField({ label, name, value, description }) {
+function modelTriStateField({ label, name, value, description, sourceNote = "" }) {
   const selected = value === undefined ? "inherit" : value ? "true" : "false";
   return `
     <label class="model-editor-compat-field">
       <span>
-        <strong>${escapeHtml(label)}</strong>
-        <small>${escapeHtml(description)}</small>
+        <strong>${escapeHtml(label)}${hintMark(description)}</strong>
+        ${sourceNote}
       </span>
-      <select name="${escapeHtml(name)}" data-model-compat-boolean>
-        <option value="inherit" ${selected === "inherit" ? "selected" : ""}>继承 / 未指定</option>
-        <option value="true" ${selected === "true" ? "selected" : ""}>是</option>
-        <option value="false" ${selected === "false" ? "selected" : ""}>否</option>
+      <select name="${escapeHtml(name)}" data-model-compat-boolean${hintTitle(description)}>
+        <option value="inherit" ${selected === "inherit" ? "selected" : ""}>继承</option>
+        <option value="true" ${selected === "true" ? "selected" : ""}>启用</option>
+        <option value="false" ${selected === "false" ? "selected" : ""}>禁用</option>
       </select>
     </label>
   `;
@@ -175,11 +194,11 @@ function modelEditorModal(payload) {
   const cost = model.cost || {};
   const compat = model.compat || {};
   const thinkingLevelMap = model.thinkingLevelMap || {};
+  const providerCompat = payload.providerCompat || {};
   const checkbox = (name, value, label, description = "") => `
     <label class="model-editor-check">
-      <input type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(value)}" ${inputTypes.includes(value) ? "checked" : ""}>
-      <span>${escapeHtml(label)}</span>
-      ${description ? `<small>${escapeHtml(description)}</small>` : ""}
+      <input type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(value)}" ${inputTypes.includes(value) ? "checked" : ""}${hintTitle(description)}>
+      <span>${escapeHtml(label)}${hintMark(description)}</span>
     </label>
   `;
   const costField = (name, label, description) => modelTextField({
@@ -195,13 +214,12 @@ function modelEditorModal(payload) {
     wide: true,
     className: "modal-dialog--model-editor",
     title: isEdit ? "编辑模型" : "添加模型",
-    description: "按 Pi models.json 的模型定义编辑。灰色说明是字段含义和兼容性提示；保存后仍会保留其他未识别字段。",
+    description: "按 Pi models.json 定义模型，保存时保留未识别字段。",
     body: `
       <div class="model-editor">
         <section class="model-editor-section">
           <div class="model-editor-section__heading">
             <h4>基本信息</h4>
-            <p>决定 Pi 如何识别此模型以及在列表中的显示方式。</p>
           </div>
           <div class="model-editor-grid model-editor-grid--two">
             ${modelTextField({ label: "模型 ID *", name: "modelId", value: model.id || "", description: "会原样传给服务端，也是模型在 Pi 中的唯一标识。" })}
@@ -212,17 +230,15 @@ function modelEditorModal(payload) {
         <section class="model-editor-section">
           <div class="model-editor-section__heading">
             <h4>能力与上下文</h4>
-            <p>这些字段主要影响 Pi 是否显示图片、是否启用思考，以及何时压缩上下文。</p>
           </div>
           <div class="model-editor-grid model-editor-grid--two">
             ${modelTextField({ label: "上下文窗口（tokens）", name: "modelContextWindow", value: model.contextWindow ?? 128000, type: "number", min: "1", description: "模型一次能接收的最大上下文，不是字节数；填小了会提前压缩，填大了可能被服务端拒绝。" })}
             ${modelTextField({ label: "最大输出（tokens）", name: "modelMaxTokens", value: model.maxTokens ?? 16384, type: "number", min: "1", description: "单次回复最多生成的 token 数，不等于上下文窗口。" })}
           </div>
           <label class="model-editor-toggle">
-            <input type="checkbox" name="modelReasoning" ${model.reasoning ? "checked" : ""}>
+            <input type="checkbox" name="modelReasoning" ${model.reasoning ? "checked" : ""}${hintTitle("开启后 Pi 可能显示思考级别并发送思考相关参数；服务端不支持时不要开启。")}>
             <span>
-              <strong>支持扩展思考 / reasoning</strong>
-              <small>开启后 Pi 可能显示思考级别并发送思考相关参数；服务端不支持时不要开启。</small>
+              <strong>支持扩展思考 / reasoning</strong>${hintMark("开启后 Pi 可能显示思考级别并发送思考相关参数；服务端不支持时不要开启。")}
             </span>
           </label>
           <div class="model-editor-subheading">输入类型</div>
@@ -232,20 +248,21 @@ function modelEditorModal(payload) {
           </div>
         </section>
 
-        <section class="model-editor-section">
-          <div class="model-editor-section__heading">
+        <details class="model-editor-section model-editor-section--collapsible">
+          <summary class="model-editor-section__heading model-editor-section__summary">
             <h4>思考级别映射</h4>
-            <p>用于把 Pi 的 off / low / high 等级转换为服务商实际接受的值。选择“不支持”会在 Pi 中隐藏该级别。</p>
+            <p>把 Pi 的思考级别映射为服务商接受的值；「不支持」会隐藏该级别。</p>
+          </summary>
+          <div class="model-editor-section__content">
+            <div class="model-thinking-grid">
+              ${THINKING_LEVELS.map(([level, label]) => modelThinkingField(level, label, thinkingLevelMap[level])).join("")}
+            </div>
           </div>
-          <div class="model-thinking-grid">
-            ${THINKING_LEVELS.map(([level, label]) => modelThinkingField(level, label, thinkingLevelMap[level])).join("")}
-          </div>
-        </section>
+        </details>
 
         <details class="model-editor-section model-editor-section--collapsible">
           <summary class="model-editor-section__heading model-editor-section__summary">
             <h4>计费信息</h4>
-            <p>单位是每百万 token 的价格，仅影响 Pi 的成本统计，不会改变服务端请求。</p>
           </summary>
           <div class="model-editor-section__content">
             <div class="model-editor-grid model-editor-grid--four">
@@ -261,7 +278,6 @@ function modelEditorModal(payload) {
         <details class="model-editor-section model-editor-section--collapsible">
           <summary class="model-editor-section__heading model-editor-section__summary">
             <h4>请求参数</h4>
-            <p>这些 JSON 会按 Pi 支持的规则合并到请求中；格式错误会阻止保存。</p>
           </summary>
           <div class="model-editor-section__content">
             ${modelJsonField({ label: "samplingParams", name: "modelSamplingParams", value: model.samplingParams, placeholder: '{"temperature":0.7,"top_p":0.95,"min_p":0}', description: "OpenAI 兼容接口的自由参数，会原样合并到请求体；可填写服务商专属的 temperature、top_k、min_p 等字段。" })}
@@ -272,25 +288,32 @@ function modelEditorModal(payload) {
         <details class="model-editor-section model-editor-section--collapsible">
           <summary class="model-editor-section__heading model-editor-section__summary">
             <h4>接口兼容性 compat</h4>
-            <p>当服务商“看起来兼容”但字段名、角色或工具协议有差异时，在这里告诉 Pi 如何调整请求。</p>
+            <p>一般不用改。只有当某个模型报错、行为不对时，才按报错调整这里。</p>
           </summary>
           <div class="model-editor-section__content">
             <div class="model-editor-compat-list">
-              ${COMPAT_BOOLEAN_FIELDS.map(([name, label, description]) => modelTriStateField({ label, name: `modelCompat_${name}`, value: compat[name], description })).join("")}
+              ${COMPAT_BOOLEAN_FIELDS.map(([name, label, description]) => modelTriStateField({
+                label,
+                name: `modelCompat_${name}`,
+                value: compat[name],
+                description,
+                sourceNote: compat[name] === undefined ? compatSourceNote(providerCompat, name) : ""
+              })).join("")}
             </div>
             <div class="model-editor-grid model-editor-grid--two model-editor-enums">
               ${COMPAT_ENUM_FIELDS.map(([name, label, options, description]) => {
                 const currentValue = compat[name];
                 const hasKnownValue = options.some(([value]) => value === currentValue);
+                const sourceNote = currentValue === undefined ? compatSourceNote(providerCompat, name) : "";
                 return `
                   <label class="model-editor-field">
-                    <span class="model-editor-field__label">${escapeHtml(label)}</span>
-                    <select name="modelCompat_${escapeHtml(name)}">
-                      <option value="inherit">继承 / 未指定</option>
+                    <span class="model-editor-field__label">${escapeHtml(label)}${hintMark(description)}</span>
+                    <select name="modelCompat_${escapeHtml(name)}"${hintTitle(description)}>
+                      <option value="inherit">继承</option>
                       ${!hasKnownValue && currentValue !== undefined ? `<option value="__custom__" selected>保留当前值：${escapeHtml(currentValue)}</option>` : ""}
                       ${options.map(([value, optionLabel]) => `<option value="${escapeHtml(value)}" ${currentValue === value ? "selected" : ""}>${escapeHtml(optionLabel)}</option>`).join("")}
                     </select>
-                    <small>${escapeHtml(description)}</small>
+                    ${sourceNote}
                   </label>
                 `;
               }).join("")}
@@ -306,7 +329,6 @@ function modelEditorModal(payload) {
         <section class="model-editor-section model-editor-section--advanced">
           <div class="model-editor-section__heading">
             <h4>其他字段</h4>
-            <p>Pi 新版本或扩展支持的字段可以放在这里；保存时会与上面的字段合并，字段名冲突时以上方表单为准。</p>
           </div>
           <textarea class="model-editor-extra" name="modelExtraJson" spellcheck="false" autocomplete="off" placeholder='{"vendorOption":true}'>${model.extraFieldsJson ? escapeHtml(model.extraFieldsJson) : ""}</textarea>
         </section>

@@ -152,6 +152,8 @@ export namespace provider {
 	    headerMode: string;
 	    headers: Record<string, string>;
 	    customHeaders?: Record<string, string>;
+	    compat?: Record<string, any>;
+	    compatExtraFieldsJson?: string;
 	    models: ModelTransport[];
 	    host: string;
 	    selectedModelId: string;
@@ -175,6 +177,8 @@ export namespace provider {
 	        this.headerMode = source["headerMode"];
 	        this.headers = source["headers"];
 	        this.customHeaders = source["customHeaders"];
+	        this.compat = source["compat"];
+	        this.compatExtraFieldsJson = source["compatExtraFieldsJson"];
 	        this.models = this.convertValues(source["models"], ModelTransport);
 	        this.host = source["host"];
 	        this.selectedModelId = source["selectedModelId"];
@@ -321,11 +325,11 @@ export namespace wsl {
 	    modelsExists: boolean;
 	    settingsJson: string;
 	    modelsJson: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new PiConfigDocuments(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.distro = source["distro"];

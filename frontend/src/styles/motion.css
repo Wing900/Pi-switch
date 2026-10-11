@@ -13,14 +13,14 @@
   color: var(--text-secondary);
   font-size: 10px;
   letter-spacing: 0.12em;
-  animation: bootContentIn 480ms var(--ease-out) both;
+  animation: bootContentIn 480ms var(--ease) both;
 }
 
 .app-boot__logo {
   width: 52px;
   height: 52px;
   border-radius: 10px;
-  animation: bootLogoBreathe 1.8s ease-in-out infinite;
+  animation: bootLogoBreathe 1.8s var(--ease) infinite;
 }
 
 .main-content {
@@ -30,7 +30,7 @@
 .drawer-header,
 .drawer-body,
 .drawer-footer {
-  animation: drawerContentIn 220ms var(--ease-out) both;
+  animation: drawerContentIn 220ms var(--ease) both;
 }
 
 .drawer-body {
@@ -44,26 +44,17 @@
 .provider-row__marker,
 .status-dot {
   transition:
-    background-color 200ms ease,
-    height 260ms var(--ease-out),
-    transform 260ms var(--ease-out);
+    background-color 200ms var(--ease),
+    height 260ms var(--ease),
+    transform 260ms var(--ease);
 }
 
 .provider-row {
-  transition: background-color 180ms ease;
+  transition: background-color 180ms var(--ease);
 }
 
-.provider-heading__signal {
-  transform-origin: left center;
-  animation: signalExpand 260ms var(--ease-out) both;
-}
-
-.primary-action span:last-child {
-  transition: transform 240ms var(--ease-out);
-}
-
-.primary-action:hover span:last-child {
-  transform: translate(2px, -2px);
+.provider-row {
+  transition: background-color 180ms var(--ease);
 }
 
 .model-select__arrow {
@@ -72,10 +63,10 @@
 
 .model-check-row__box {
   transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms var(--ease-out);
+    background-color 180ms var(--ease),
+    border-color 180ms var(--ease),
+    box-shadow 180ms var(--ease),
+    transform 180ms var(--ease);
 }
 
 .model-check-row:hover .model-check-row__box {
@@ -87,9 +78,9 @@ select,
 .model-select__trigger {
   transform: translateY(0);
   transition:
-    background-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 220ms var(--ease-out);
+    background-color 180ms var(--ease),
+    box-shadow 180ms var(--ease),
+    transform 220ms var(--ease);
 }
 
 input:focus,
@@ -99,11 +90,11 @@ select:focus,
 }
 
 ::view-transition-old(provider-content) {
-  animation: providerOldOut 100ms ease both;
+  animation: providerOldOut 100ms var(--ease) both;
 }
 
 ::view-transition-new(provider-content) {
-  animation: providerNewIn 180ms ease-out both;
+  animation: providerNewIn 180ms var(--ease) both;
 }
 
 @keyframes bootContentIn {
@@ -117,13 +108,6 @@ select:focus,
   50% {
     opacity: 0.72;
     transform: scale(0.97);
-  }
-}
-
-@keyframes signalExpand {
-  from {
-    opacity: 0;
-    transform: scaleX(0);
   }
 }
 

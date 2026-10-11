@@ -8,11 +8,11 @@
 }
 
 .aside-header {
-  min-height: 104px;
-  padding: 25px 24px;
+  min-height: 64px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 11px;
   --wails-draggable: drag;
   cursor: move;
   user-select: none;
@@ -28,17 +28,16 @@
 
 .aside-header strong {
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: var(--text-section);
   font-weight: 500;
   letter-spacing: 0.02em;
 }
 
 .sidebar-section-label {
-  padding: 4px 24px 12px;
+  padding: 6px 24px 10px;
   color: var(--ink-muted);
-  font-family: var(--font-display);
-  font-size: 9px;
-  letter-spacing: 0.15em;
+  font-size: var(--text-micro);
+  font-weight: 600;
 }
 
 .provider-list {
@@ -62,7 +61,7 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  padding: 16px 7px;
+  padding: 13px 7px;
   display: flex;
   align-items: center;
   color: inherit;
@@ -78,7 +77,7 @@
   height: 24px;
   background: transparent;
   transform: translateY(-50%);
-  transition: background-color 160ms ease, height 220ms var(--ease-out);
+  transition: background-color 160ms var(--ease), height 220ms var(--ease);
 }
 
 .provider-row__content,
@@ -91,16 +90,16 @@
 .provider-row__name {
   overflow: hidden;
   color: var(--ink-secondary);
-  font-size: 13px;
+  font-size: var(--text-body);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .provider-row__meta {
-  margin-top: 5px;
+  margin-top: 4px;
   overflow: hidden;
   color: var(--ink-muted);
-  font-size: 10px;
+  font-size: var(--text-micro);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -108,9 +107,9 @@
 .provider-row__configure {
   width: 38px;
   color: transparent;
-  font-size: 10px;
+  font-size: var(--text-micro);
   cursor: pointer;
-  transition: color 150ms ease;
+  transition: color 150ms var(--ease);
 }
 
 .provider-row:hover {

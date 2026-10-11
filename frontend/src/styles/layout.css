@@ -74,9 +74,7 @@
 
 .topbar-context {
   color: var(--ink-muted);
-  font-family: var(--font-display);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: var(--text-micro);
 }
 
 .main-topbar *,

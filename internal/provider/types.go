@@ -21,16 +21,18 @@ type Config struct {
 	HeaderMode      string                     `json:"headerMode"`
 	Headers         map[string]string          `json:"headers"`
 	CustomHeaders   map[string]string          `json:"customHeaders,omitempty"`
+	Compat          map[string]any             `json:"compat,omitempty"`
 	Models          []ModelInfo                `json:"models"`
 	Host            string                     `json:"host"`
 	SelectedModelID string                     `json:"selectedModelId"`
 	Extra           map[string]json.RawMessage `json:"-"`
+	CompatRaw       map[string]json.RawMessage `json:"-"`
 }
 
 var configFields = map[string]struct{}{
 	"id": {}, "name": {}, "type": {}, "baseUrl": {}, "apiKeyEnv": {},
 	"apiKeyLiteral": {}, "api": {}, "proxy": {}, "headerMode": {}, "headers": {}, "customHeaders": {},
-	"models": {}, "host": {}, "selectedModelId": {},
+	"compat": {}, "models": {}, "host": {}, "selectedModelId": {},
 }
 
 func (cfg *Config) UnmarshalJSON(data []byte) error {
@@ -44,11 +46,36 @@ func (cfg *Config) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+
+	compatRaw := map[string]json.RawMessage{}
+	structuredCompat := map[string]any{}
+	if value, ok := raw["compat"]; ok && len(value) > 0 {
+		if err := json.Unmarshal(value, &compatRaw); err != nil {
+			return err
+		}
+		for field, rawValue := range compatRaw {
+			if _, known := transportCompatFields[field]; !known {
+				continue
+			}
+			var decodedValue any
+			if err := json.Unmarshal(rawValue, &decodedValue); err != nil {
+				return err
+			}
+			structuredCompat[field] = decodedValue
+		}
+	}
+
 	for field := range configFields {
 		delete(raw, field)
 	}
 	*cfg = Config(decoded)
+	if len(structuredCompat) == 0 {
+		cfg.Compat = nil
+	} else {
+		cfg.Compat = structuredCompat
+	}
 	cfg.Extra = raw
+	cfg.CompatRaw = compatRaw
 	return nil
 }
 
@@ -62,6 +89,30 @@ func (cfg Config) MarshalJSON() ([]byte, error) {
 	if err := json.Unmarshal(data, &fields); err != nil {
 		return nil, err
 	}
+
+	compatFields := cloneRawFields(cfg.CompatRaw)
+	if len(cfg.Compat) > 0 {
+		encodedCompat, err := json.Marshal(cfg.Compat)
+		if err != nil {
+			return nil, err
+		}
+		structuredCompat := map[string]json.RawMessage{}
+		if err := json.Unmarshal(encodedCompat, &structuredCompat); err != nil {
+			return nil, err
+		}
+		for field, value := range structuredCompat {
+			compatFields[field] = value
+		}
+	}
+	if len(compatFields) == 0 {
+		delete(fields, "compat")
+	} else {
+		fields["compat"], err = json.Marshal(compatFields)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for field, value := range cfg.Extra {
 		if _, known := configFields[field]; !known {
 			fields[field] = value
@@ -330,10 +381,10 @@ func ModelListRevision(models []ModelInfo) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func splitCompatForTransport(model ModelInfo) (map[string]any, string, error) {
+func splitCompat(compat map[string]any, compatRaw map[string]json.RawMessage) (map[string]any, string, error) {
 	structured := map[string]any{}
-	extra := cloneRawFields(model.CompatRaw)
-	for field, value := range model.CompatRaw {
+	extra := cloneRawFields(compatRaw)
+	for field, value := range compatRaw {
 		if _, known := transportCompatFields[field]; !known {
 			continue
 		}
@@ -344,7 +395,7 @@ func splitCompatForTransport(model ModelInfo) (map[string]any, string, error) {
 		structured[field] = decoded
 		delete(extra, field)
 	}
-	for field, value := range model.Compat {
+	for field, value := range compat {
 		if _, known := transportCompatFields[field]; known {
 			structured[field] = value
 			delete(extra, field)
@@ -363,6 +414,10 @@ func splitCompatForTransport(model ModelInfo) (map[string]any, string, error) {
 		structured = nil
 	}
 	return structured, extraJSON, err
+}
+
+func splitCompatForTransport(model ModelInfo) (map[string]any, string, error) {
+	return splitCompat(model.Compat, model.CompatRaw)
 }
 
 func parseRawObject(value string) (map[string]json.RawMessage, error) {
@@ -393,26 +448,32 @@ func cloneRawFields(input map[string]json.RawMessage) map[string]json.RawMessage
 }
 
 type ConfigTransport struct {
-	ID              string            `json:"id"`
-	Name            string            `json:"name"`
-	Type            string            `json:"type"`
-	BaseURL         string            `json:"baseUrl"`
-	APIKeyEnv       string            `json:"apiKeyEnv"`
-	APIKeyLiteral   string            `json:"apiKeyLiteral"`
-	API             string            `json:"api"`
-	Proxy           string            `json:"proxy"`
-	HeaderMode      string            `json:"headerMode"`
-	Headers         map[string]string `json:"headers"`
-	CustomHeaders   map[string]string `json:"customHeaders,omitempty"`
-	Models          []ModelTransport  `json:"models"`
-	Host            string            `json:"host"`
-	SelectedModelID string            `json:"selectedModelId"`
-	ExtraFieldsJSON string            `json:"extraFieldsJson,omitempty"`
-	ModelsRevision  string            `json:"modelsRevision,omitempty"`
+	ID                    string            `json:"id"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	BaseURL               string            `json:"baseUrl"`
+	APIKeyEnv             string            `json:"apiKeyEnv"`
+	APIKeyLiteral         string            `json:"apiKeyLiteral"`
+	API                   string            `json:"api"`
+	Proxy                 string            `json:"proxy"`
+	HeaderMode            string            `json:"headerMode"`
+	Headers               map[string]string `json:"headers"`
+	CustomHeaders         map[string]string `json:"customHeaders,omitempty"`
+	Compat                map[string]any    `json:"compat,omitempty"`
+	CompatExtraFieldsJSON string            `json:"compatExtraFieldsJson,omitempty"`
+	Models                []ModelTransport  `json:"models"`
+	Host                  string            `json:"host"`
+	SelectedModelID       string            `json:"selectedModelId"`
+	ExtraFieldsJSON       string            `json:"extraFieldsJson,omitempty"`
+	ModelsRevision        string            `json:"modelsRevision,omitempty"`
 }
 
 func NewConfigTransport(cfg Config) (ConfigTransport, error) {
 	models, err := ModelTransports(cfg.Models)
+	if err != nil {
+		return ConfigTransport{}, err
+	}
+	compat, compatExtra, err := splitCompat(cfg.Compat, cfg.CompatRaw)
 	if err != nil {
 		return ConfigTransport{}, err
 	}
@@ -424,6 +485,7 @@ func NewConfigTransport(cfg Config) (ConfigTransport, error) {
 		ID: cfg.ID, Name: cfg.Name, Type: cfg.Type, BaseURL: cfg.BaseURL,
 		APIKeyEnv: cfg.APIKeyEnv, APIKeyLiteral: cfg.APIKeyLiteral, API: cfg.API, Proxy: cfg.Proxy,
 		HeaderMode: cfg.HeaderMode, Headers: cfg.Headers, CustomHeaders: cfg.CustomHeaders,
+		Compat: compat, CompatExtraFieldsJSON: compatExtra,
 		Models: models, Host: cfg.Host, SelectedModelID: cfg.SelectedModelID, ExtraFieldsJSON: extraJSON,
 		ModelsRevision: ModelListRevision(cfg.Models),
 	}, nil
@@ -441,11 +503,19 @@ func (transport ConfigTransport) Config() (Config, error) {
 	for field := range configFields {
 		delete(extra, field)
 	}
+	compatRaw, err := parseRawObject(transport.CompatExtraFieldsJSON)
+	if err != nil {
+		return Config{}, fmt.Errorf("其他 Provider compat 字段无效：%w", err)
+	}
+	for field := range transportCompatFields {
+		delete(compatRaw, field)
+	}
 	return Config{
 		ID: transport.ID, Name: transport.Name, Type: transport.Type, BaseURL: transport.BaseURL,
 		APIKeyEnv: transport.APIKeyEnv, APIKeyLiteral: transport.APIKeyLiteral, API: transport.API,
 		Proxy: transport.Proxy, HeaderMode: transport.HeaderMode, Headers: transport.Headers,
-		CustomHeaders: transport.CustomHeaders, Models: models, Host: transport.Host,
+		CustomHeaders: transport.CustomHeaders, Compat: transport.Compat, CompatRaw: compatRaw,
+		Models: models, Host: transport.Host,
 		SelectedModelID: transport.SelectedModelID, Extra: extra,
 	}, nil
 }

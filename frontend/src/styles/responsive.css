@@ -6,10 +6,6 @@
   .main-content {
     width: calc(100% - 48px);
   }
-
-  .provider-heading > span:nth-child(2) {
-    font-size: 34px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -26,7 +22,7 @@
   }
 
   .aside-header {
-    min-height: 80px;
+    min-height: 56px;
   }
 
   .provider-list {

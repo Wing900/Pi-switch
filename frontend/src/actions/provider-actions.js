@@ -368,6 +368,7 @@ export function createProviderActions({ root, api, store, providerForm, feedback
           mode: model ? "edit" : "add",
           originalModelId: model?.id || "",
           modelsRevision: provider?.modelsRevision || "",
+          providerCompat: provider?.compat || {},
           model: model || {
             id: "",
             name: "",

@@ -4,13 +4,13 @@
 
 .model-editor {
   display: grid;
-  gap: 18px;
+  gap: 22px;
 }
 
 .model-editor-section {
   display: grid;
-  gap: 12px;
-  padding-top: 14px;
+  gap: 14px;
+  padding-top: 18px;
   border-top: 1px solid var(--line-subtle);
 }
 
@@ -27,14 +27,14 @@
 .model-editor-section__heading h4 {
   margin: 0;
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 600;
 }
 
 .model-editor-section__heading p {
   margin: 0;
   color: var(--ink-muted);
-  font-size: 10px;
+  font-size: var(--text-micro);
   line-height: 1.55;
 }
 
@@ -60,7 +60,7 @@
 
 .model-editor-field__label {
   color: var(--ink-secondary);
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
 }
 
@@ -70,45 +70,15 @@
 .model-editor-check small,
 .model-editor-compat-field small {
   color: var(--ink-muted);
-  font-size: 9px;
+  font-size: var(--text-micro);
   line-height: 1.45;
-}
-
-.model-editor-field input,
-.model-editor-field select,
-.model-editor-json-field textarea,
-.model-editor-extra,
-.model-editor-thinking-row input,
-.model-thinking-row input,
-.model-thinking-row select {
-  min-height: 34px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 7px 9px;
-  border: 1px solid var(--line-subtle);
-  border-radius: 5px;
-  background: var(--color-input-bg);
-  color: var(--ink);
-  font-size: 11px;
-  outline: none;
-}
-
-.model-editor-field input:focus,
-.model-editor-field select:focus,
-.model-editor-json-field textarea:focus,
-.model-editor-extra:focus,
-.model-thinking-row input:focus,
-.model-thinking-row select:focus {
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow-input-focus);
 }
 
 .model-editor-json-field textarea,
 .model-editor-extra {
-  min-height: 88px;
-  resize: vertical;
+  min-height: 84px;
   font-family: var(--font-mono, monospace);
-  font-size: 10px;
+  font-size: var(--text-micro);
   line-height: 1.5;
 }
 
@@ -129,20 +99,18 @@
   accent-color: var(--color-accent);
 }
 
-.model-editor-toggle > span,
-.model-editor-check > span {
-  display: grid;
-  gap: 3px;
+.model-editor-toggle > span {
+  display: block;
 }
 
 .model-editor-toggle strong {
   color: var(--ink-secondary);
-  font-size: 11px;
+  font-size: var(--text-body);
 }
 
 .model-editor-subheading {
   color: var(--ink-secondary);
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
 }
 
@@ -165,7 +133,7 @@
 
 .model-thinking-row__name {
   color: var(--ink-secondary);
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
 }
 
@@ -196,18 +164,15 @@
 
 .model-editor-compat-field strong {
   color: var(--ink-secondary);
-  font-size: 10px;
+  font-size: var(--text-micro);
   font-weight: 600;
 }
 
-.model-editor-compat-field select {
-  min-height: 30px;
-  padding: 5px 7px;
-  border: 1px solid var(--line-subtle);
-  border-radius: 4px;
-  background: var(--color-input-bg);
-  color: var(--ink);
-  font-size: 10px;
+.model-editor-compat-field__source {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-info);
+  font-size: var(--text-micro);
 }
 
 .model-editor-section--collapsible {

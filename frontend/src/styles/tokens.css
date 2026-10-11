@@ -25,7 +25,8 @@
   --color-divider: rgba(13, 13, 13, 0.06);
   --color-divider-strong: rgba(13, 13, 13, 0.15);
   --color-hover-bg: rgba(13, 13, 13, 0.04);
-  --color-input-bg: rgba(13, 13, 13, 0.03);
+  --color-input-bg: #ffffff;
+  --color-input-border: rgba(13, 13, 13, 0.10);
   --color-modal-backdrop: rgba(13, 13, 13, 0.18);
   --color-drawer-scrim: rgba(13, 13, 13, 0.08);
 
@@ -54,7 +55,21 @@
   --font-ui: "Microsoft YaHei UI", "PingFang SC", sans-serif;
   --font-display: "Bahnschrift", "Microsoft YaHei UI", sans-serif;
   --radius-shell: 12px;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* 缓动：全站统一为 Apple Core Animation 的 EaseInEaseOut 控制点。
+     注：HIG 正文不含动效数值，这是 Core Animation 的命名曲线（与 CSS ease-in-out 同值）。 */
+  --ease: cubic-bezier(0.42, 0, 0.58, 1);
+
+  /* 单一 type scale：micro / body / section / title。禁止其他字号。 */
+  --text-micro: 11px;
+  --text-body: 13px;
+  --text-section: 15px;
+  --text-title: 20px;
+  --leading-body: 1.6;
+
+  /* 统一控件尺寸：所有 input / select / textarea 共用 */
+  --control-height: 36px;
+  --control-radius: 6px;
+  --control-padding-x: 10px;
 }
 
 :root[data-theme="dark"],
@@ -86,7 +101,8 @@ body[data-theme="dark"],
   --color-divider: rgba(255, 255, 255, 0.08);
   --color-divider-strong: rgba(255, 255, 255, 0.18);
   --color-hover-bg: rgba(255, 255, 255, 0.05);
-  --color-input-bg: rgba(255, 255, 255, 0.06);
+  --color-input-bg: #1e2127;
+  --color-input-border: rgba(255, 255, 255, 0.10);
   --color-modal-backdrop: rgba(5, 7, 11, 0.48);
   --color-drawer-scrim: rgba(5, 7, 11, 0.24);
 
